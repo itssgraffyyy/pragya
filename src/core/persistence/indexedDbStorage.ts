@@ -1,0 +1,104 @@
+/**
+ * IndexedDB storage adapter for the desktop app.
+ * Database: pragya-local / version 1
+ * Stores: scenarios (key: id), sessions (key: summary.sessionId), settings (key: 'app')
+ */
+
+import type { ScenarioDefinition } from '../types';
+import type { AppSettings, StorageAdapter, StoredSession } from './storage';
+import { DEFAULT_SETTINGS } from './storage';
+
+const DB_NAME = 'pragya-local';
+const DB_VERSION = 1;
+const STORE_SCENARIOS = 'scenarios';
+const STORE_SESSIONS = 'sessions';
+const STORE_SETTINGS = 'settings';
+const SETTINGS_KEY = 'app';
+
+function promisifyRequest<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'));
+  });
+}
+
+export class IndexedDbStorage implements StorageAdapter {
+  private db: IDBDatabase | null = null;
+
+  async init(): Promise<void> {
+    if (typeof indexedDB === 'undefined') {
+      throw new Error('IndexedDB is not available in this environment');
+    }
+    this.db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_SCENARIOS)) {
+          db.createObjectStore(STORE_SCENARIOS, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(STORE_SESSIONS)) {
+          db.createObjectStore(STORE_SESSIONS, { keyPath: 'summary.sessionId' });
+        }
+        if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
+          db.createObjectStore(STORE_SETTINGS);
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error ?? new Error('Failed to open IndexedDB'));
+    });
+  }
+
+  private tx(store: string, mode: IDBTransactionMode): IDBObjectStore {
+    if (!this.db) throw new Error('IndexedDB not initialized — call init() first');
+    return this.db.transaction(store, mode).objectStore(store);
+  }
+
+  async listScenarios(): Promise<ScenarioDefinition[]> {
+    return promisifyRequest(this.tx(STORE_SCENARIOS, 'readonly').getAll());
+  }
+
+  async getScenario(id: string): Promise<ScenarioDefinition | undefined> {
+    return promisifyRequest(this.tx(STORE_SCENARIOS, 'readonly').get(id));
+  }
+
+  async saveScenario(scenario: ScenarioDefinition): Promise<void> {
+    await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').put(scenario));
+  }
+
+  async deleteScenario(id: string): Promise<void> {
+    await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').delete(id));
+  }
+
+  async listSessions(): Promise<StoredSession[]> {
+    return promisifyRequest(this.tx(STORE_SESSIONS, 'readonly').getAll());
+  }
+
+  async getSession(sessionId: string): Promise<StoredSession | undefined> {
+    return promisifyRequest(this.tx(STORE_SESSIONS, 'readonly').get(sessionId));
+  }
+
+  async saveSession(session: StoredSession): Promise<void> {
+    await promisifyRequest(this.tx(STORE_SESSIONS, 'readwrite').put(session));
+  }
+
+  async deleteSession(sessionId: string): Promise<void> {
+    await promisifyRequest(this.tx(STORE_SESSIONS, 'readwrite').delete(sessionId));
+  }
+
+  async getSettings(): Promise<AppSettings> {
+    const stored = await promisifyRequest< AppSettings | undefined>(
+      this.tx(STORE_SETTINGS, 'readonly').get(SETTINGS_KEY),
+    );
+    return { ...DEFAULT_SETTINGS, ...(stored ?? {}) };
+  }
+
+  async saveSettings(settings: AppSettings): Promise<void> {
+    await promisifyRequest(this.tx(STORE_SETTINGS, 'readwrite').put(settings, SETTINGS_KEY));
+  }
+
+  async clearAll(): Promise<void> {
+    await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').clear());
+    await promisifyRequest(this.tx(STORE_SESSIONS, 'readwrite').clear());
+    await promisifyRequest(this.tx(STORE_SETTINGS, 'readwrite').clear());
+  }
+}
