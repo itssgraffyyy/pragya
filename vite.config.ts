@@ -15,8 +15,8 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/tests/setup.ts'],
+    environment: 'node',
+    // DOM setup is imported only by component tests; core tests need no browser globals.
     include: ['src/tests/**/*.test.{ts,tsx}'],
     css: false,
   },

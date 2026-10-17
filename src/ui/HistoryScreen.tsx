@@ -1,3 +1,4 @@
+import { AssessmentDashboard } from './AssessmentDashboard';
 /**
  * Session History — lists locally saved sessions, allows re-export.
  * Ground truth is visible here (post-session review tool).
@@ -9,6 +10,7 @@ import { getStorage } from '../core/persistence/appStorage';
 import { useUiStore } from '../store/uiStore';
 
 export function HistoryScreen() {
+  const [review, setReview] = useState<StoredSession | null>(null);
   const navigate = useUiStore((s) => s.navigate);
   const [sessions, setSessions] = useState<StoredSession[]>([]);
   const [storage] = useState<StorageAdapter>(() => getStorage());
@@ -45,6 +47,7 @@ export function HistoryScreen() {
         </button>
       </div>
 
+      {review && <AssessmentDashboard key={review.summary.sessionId} session={review} />}
       {sessions.length === 0 ? (
         <p className="text-console-muted" data-testid="history-empty">
           No saved sessions yet. Complete or abort an exercise to create one.
@@ -61,6 +64,7 @@ export function HistoryScreen() {
                   {s.summary.assessments.length} correct · seed {s.summary.seed}
                 </div>
               </div>
+              <button onClick={() => setReview(s)} className="border px-2 py-1">Review assessment</button>
               <button onClick={() => reExport(s)} className="ml-auto text-sm border border-console-border px-2 py-0.5 rounded">
                 Export
               </button>

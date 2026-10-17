@@ -1,3 +1,4 @@
+import { initStorage } from '../core/persistence/appStorage';
 /**
  * Simulation store (Zustand).
  *
@@ -125,6 +126,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
     const { engine } = get();
     if (!engine) return;
     try {
+      capturedSessions.delete(engine);
       engine.restart();
       set({ lastSummary: null, lastExport: null, lastActionError: null });
     } catch (e) {
@@ -146,7 +148,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
         engine.complete();
       }
       const summary = buildSessionSummary(engine);
-      set({ lastSummary: summary, lastExport: buildSessionExport(engine) });
+      set({ lastSummary: summary, lastExport: captureSession(engine, set) });
       // The Module 1 journey ends on the summary screen — navigate there
       // automatically so "End session" lands on Session Summary.
       useUiStore.getState().navigate('summary');
@@ -164,7 +166,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
         engine.abort();
       }
       const summary = buildSessionSummary(engine);
-      set({ lastSummary: summary, lastExport: buildSessionExport(engine) });
+      set({ lastSummary: summary, lastExport: captureSession(engine, set) });
     } catch (e) {
       set({ lastActionError: (e as Error).message });
     }
@@ -178,7 +180,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
     if (engine.state === 'completed') {
       // Auto-capture summary on natural completion.
       const summary = buildSessionSummary(engine);
-      set({ lastSummary: summary, lastExport: buildSessionExport(engine) });
+      set({ lastSummary: summary, lastExport: captureSession(engine, set) });
     }
     set((s) => ({ revision: s.revision + 1, simTime: engine.simTime, state: engine.state }));
   },
@@ -207,7 +209,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
     const { engine } = get();
     if (engine && engine.state === 'completed') {
       const summary = buildSessionSummary(engine);
-      set({ lastSummary: summary, lastExport: buildSessionExport(engine) });
+      set({ lastSummary: summary, lastExport: captureSession(engine, set) });
     }
   },
 
@@ -236,4 +238,17 @@ export function useTraineeView(): TraineeView | null {
   const revision = useSimulationStore((s) => s.revision);
   void revision; // dependency: recompute view on every mutation
   return engine ? engine.traineeView() : null;
+}
+
+/** Capture once per terminal engine state; retain failures in the visible store error. */
+const capturedSessions = new WeakMap<SimulationEngine, SessionExportEnvelope>();
+function captureSession(engine: SimulationEngine, set: (partial: Partial<SimulationStore>) => void): SessionExportEnvelope {
+  const existing = capturedSessions.get(engine);
+  if (existing && existing.summary.endedAt === engine.endedAtIso) return existing;
+  const envelope = buildSessionExport(engine);
+  capturedSessions.set(engine, envelope);
+  void initStorage().then((storage) => storage.saveSession(envelope)).catch((error: unknown) => {
+    set({ lastActionError: `Session could not be saved: ${error instanceof Error ? error.message : String(error)}` });
+  });
+  return envelope;
 }

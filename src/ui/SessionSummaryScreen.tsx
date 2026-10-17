@@ -1,3 +1,4 @@
+import { AssessmentDashboard } from './AssessmentDashboard';
 /**
  * Session Summary — shown after completion/abort.
  * Reveals ground truth ONLY here (session is over).
@@ -7,6 +8,7 @@ import { useSimulationStore } from '../store/simulationStore';
 import { useUiStore } from '../store/uiStore';
 
 export function SessionSummaryScreen() {
+  const saveError = useSimulationStore((s) => s.lastActionError);
   const lastSummary = useSimulationStore((s) => s.lastSummary);
   const lastExport = useSimulationStore((s) => s.lastExport);
   const navigate = useUiStore((s) => s.navigate);
@@ -62,6 +64,9 @@ export function SessionSummaryScreen() {
           <span className="text-console-muted" data-testid="count-unanswered">{unanswered} unanswered</span>
         </div>
       </div>
+
+      {saveError && <p role="alert" className="text-console-danger">{saveError}</p>}
+      {lastExport && <AssessmentDashboard key={lastSummary.sessionId} session={lastExport} />}
 
       {/* Ground truth revealed post-session only */}
       <div className="panel p-4 mb-4" data-testid="summary-assessments">

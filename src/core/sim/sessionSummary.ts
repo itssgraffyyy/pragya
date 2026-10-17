@@ -1,3 +1,6 @@
+import type { StoredSession } from '../persistence/storage';
+import { assessStoredSession } from '../scoring/storedSession';
+import { POLICY_BASIC_RECOGNITION } from '../scoring/samplePolicies';
 /**
  * Session summary builder.
  *
@@ -52,7 +55,7 @@ export function buildSessionSummary(engine: SimulationEngine): SessionSummaryRec
 }
 
 /** Envelope for exporting a session summary + events as one JSON file. */
-export interface SessionExportEnvelope {
+export interface SessionExportEnvelope extends StoredSession {
   exportVersion: number;
   kind: 'pragya-session-export';
   summary: SessionSummaryRecord;
@@ -60,7 +63,11 @@ export interface SessionExportEnvelope {
 }
 
 export function buildSessionExport(engine: SimulationEngine): SessionExportEnvelope {
+  const session: StoredSession = { summary: buildSessionSummary(engine), events: engine.log.export() };
   return {
+    ...session,
+    assessment: assessStoredSession(session),
+    scoringPolicy: POLICY_BASIC_RECOGNITION,
     exportVersion: EVENT_LOG_VERSION,
     kind: 'pragya-session-export',
     summary: buildSessionSummary(engine),

@@ -18,6 +18,11 @@ test.describe('PRAGYA Module 1 — Complete User Journey', () => {
         if (attempt === 2) throw new Error('App did not load after 3 attempts — is the dev server up?');
       }
     }
+    // Keep headless WebGL within the app's supported low graphics settings.
+    await page.click('[data-testid="home-settings"]');
+    await page.selectOption('[data-testid="settings-graphics"]', 'low');
+    await page.check('[data-testid="settings-reduced-motion"]');
+    await page.getByRole('button', { name: /Home/ }).click();
     // Verify app shell is present
     await expect(page.locator('body')).not.toBeEmpty();
   });
@@ -70,19 +75,38 @@ test.describe('PRAGYA Module 1 — Complete User Journey', () => {
     await page.selectOption('[data-testid="select-response-c1"]', 'recordAndReport');
 
     // ── Step 10: Submit assessment ──
+    // NOTE: the single-contact scenario auto-completes on submit, which may
+    // unmount the assessment panel — accept either the "Submitted" panel or
+    // the terminal completed state.
     await expect(page.locator('[data-testid="btn-submit-c1"]')).toBeEnabled({ timeout: 15_000 });
     await page.click('[data-testid="btn-submit-c1"]');
-    await expect(page.locator('[data-testid="assessment-c1"]')).toContainText('Submitted');
+    await expect.poll(async () => {
+      const state = await page.getByTestId('state-badge').textContent();
+      if (state?.trim() === 'completed') return true;
+      const panels = await page.getByTestId('assessment-c1').allTextContents();
+      return panels.some((text) => /Submitted/.test(text));
+    }, { timeout: 15_000 }).toBe(true);
 
-    // ── Step 11: End session ──
-    await expect(page.locator('[data-testid="btn-end"]')).toBeVisible({ timeout: 15_000 });
-    await page.click('[data-testid="btn-end"]');
+    // ── Step 11: End session (or go to summary if auto-completed) ──
+    const endBtn = page.locator('[data-testid="btn-end"]');
+    if (await endBtn.isVisible().catch(() => false)) {
+      await endBtn.click();
+    } else {
+      await page.click('[data-testid="btn-summary"]');
+    }
 
     // ── Step 12: Session Summary (ground truth revealed) ──
     await expect(page.locator('h2')).toContainText('Session Summary', { timeout: 30_000 });
     await expect(page.locator('[data-testid="summary-row-c1"]')).toBeVisible();
     await expect(page.locator('[data-testid="count-correct"]')).toBeVisible();
     await expect(page.locator('[data-testid="count-incorrect"]')).toBeVisible();
+
+    await expect(page.getByTestId('assessment-dashboard')).toBeVisible();
+    await expect(page.getByTestId('assessment-overall')).toContainText('/ 100');
+    await page.getByText('Configure scoring policy').click();
+    await page.getByLabel('Scoring policy JSON').fill('{}');
+    await page.getByRole('button', { name: 'Apply policy preview' }).click();
+    await expect(page.getByRole('alert')).toBeVisible();
 
     // Verify ground truth matches classification
     const groundTruthCell = page.locator('[data-testid="summary-row-c1"]').locator('td').nth(2);
@@ -93,13 +117,14 @@ test.describe('PRAGYA Module 1 — Complete User Journey', () => {
 
     // ── Step 14: Back to scenarios → History ──
     await page.click('text=Back to scenarios');
+    await page.getByRole('button', { name: /Home/ }).click();
     await page.click('[data-testid="home-session-history"]');
     await expect(page.locator('h2')).toContainText('Session History');
 
     // The completed session should appear in history
-    // Note: session may or may not persist depending on storage adapter
-    // We verify the screen loads without error
-    await expect(page.locator('[data-testid="history-empty"], [data-testid^="history-"]')).toBeVisible();
+    await expect(page.locator('[data-testid^="history-sess-"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Review assessment' }).click();
+    await expect(page.getByTestId('assessment-dashboard')).toBeVisible();
   });
 
   test('generator screen produces a scenario and begins exercise', async ({ page }) => {
@@ -117,9 +142,11 @@ test.describe('PRAGYA Module 1 — Complete User Journey', () => {
     await page.click('[data-testid="home-scenario-selection"]');
     await page.click('[data-testid="begin-scn-single-recognition"]');
     await page.click('[data-testid="btn-start"]');
-    await page.waitForTimeout(6000);
+    await expect(page.locator('[data-testid="contact-row-c1"]')).toBeVisible({ timeout: 60_000 });
 
     await page.click('[data-testid="contact-row-c1"]');
+    await expect(page.locator('[data-testid="assessment-c1"]')).toBeVisible();
+    await expect(page.locator('[data-testid="btn-ack-c1"]')).toBeEnabled({ timeout: 60_000 });
     await page.click('[data-testid="btn-ack-c1"]');
 
     // During simulation, ground truth label should NOT appear anywhere

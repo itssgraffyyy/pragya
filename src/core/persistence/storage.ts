@@ -1,3 +1,5 @@
+import type { AssessmentResult } from '../scoring/results';
+import type { ScoringPolicy } from '../scoring/policy';
 /**
  * Local persistence (offline-first).
  *
@@ -11,6 +13,8 @@
 import type { EventLogExport, ScenarioDefinition, SessionSummaryRecord } from '../types';
 
 export interface StoredSession {
+  assessment?: AssessmentResult;
+  scoringPolicy?: ScoringPolicy;
   summary: SessionSummaryRecord;
   events: EventLogExport;
 }
