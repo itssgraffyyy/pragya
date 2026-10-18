@@ -1,3 +1,4 @@
+import { AdaptiveTrainingScreen } from './ui/AdaptiveTrainingScreen';
 import { LearningScreen } from './ui/LearningScreen';
 import { TraineeProfilesScreen } from './ui/TraineeProfilesScreen';
 /**
@@ -75,6 +76,7 @@ export default function App() {
       {screen === 'history' && <HistoryScreen />}
       {screen === 'trainees' && <TraineeProfilesScreen />}
       {screen === 'learning' && <LearningScreen />}
+      {screen === 'adaptive' && <AdaptiveTrainingScreen />}
     </div>
   );
 }

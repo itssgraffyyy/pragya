@@ -1,3 +1,4 @@
+import type { LearningPlan } from '../learning/plan';
 import type { TraineeProfile } from '../learning/profile';
 /**
  * In-memory storage adapter — used by unit tests and as a fallback when
@@ -13,6 +14,7 @@ import {
 } from './storage';
 
 export class MemoryStorage implements StorageAdapter {
+  private plans = new Map<string, LearningPlan>();
   private trainees = new Map<string, TraineeProfile>();
   private scenarios = new Map<string, ScenarioDefinition>();
   private sessions = new Map<string, StoredSession>();
@@ -70,7 +72,11 @@ export class MemoryStorage implements StorageAdapter {
     for (const s of sessions) this.sessions.set(s.summary.sessionId, structuredClone(s));
     await this.saveTrainee(profile);
   }
+  async getLearningPlan(id: string): Promise<LearningPlan | undefined> { return structuredClone(this.plans.get(id)); }
+  async saveLearningPlan(plan: LearningPlan): Promise<void> { this.plans.set(plan.traineeId, structuredClone(plan)); }
+  async deleteLearningPlan(id: string): Promise<void> { this.plans.delete(id); }
   async clearAll(): Promise<void> {
+    this.plans.clear();
     this.trainees.clear();
     this.scenarios.clear();
     this.sessions.clear();

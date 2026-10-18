@@ -1,3 +1,4 @@
+import type { LearningPlan } from '../learning/plan';
 import type { TraineeProfile } from '../learning/profile';
 /**
  * IndexedDB storage adapter for the desktop app.
@@ -10,7 +11,7 @@ import type { AppSettings, StorageAdapter, StoredSession } from './storage';
 import { DEFAULT_SETTINGS } from './storage';
 
 const DB_NAME = 'pragya-local';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_SCENARIOS = 'scenarios';
 const STORE_SESSIONS = 'sessions';
 const STORE_SETTINGS = 'settings';
@@ -34,6 +35,7 @@ export class IndexedDbStorage implements StorageAdapter {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onupgradeneeded = () => {
         const db = request.result;
+        if (!db.objectStoreNames.contains('learningPlans')) db.createObjectStore('learningPlans', { keyPath: 'traineeId' });
         // v2 adds profiles without rewriting v1 scenario/session/settings records.
         if (!db.objectStoreNames.contains('trainees')) db.createObjectStore('trainees', { keyPath: 'id' });
         if (!db.objectStoreNames.contains(STORE_SCENARIOS)) {
@@ -112,7 +114,11 @@ export class IndexedDbStorage implements StorageAdapter {
       for (const s of sessions) tx.objectStore(STORE_SESSIONS).put(s);
     });
   }
+  async getLearningPlan(id: string): Promise<LearningPlan | undefined> { return promisifyRequest(this.tx('learningPlans', 'readonly').get(id)); }
+  async saveLearningPlan(plan: LearningPlan): Promise<void> { await promisifyRequest(this.tx('learningPlans', 'readwrite').put(plan)); }
+  async deleteLearningPlan(id: string): Promise<void> { await promisifyRequest(this.tx('learningPlans', 'readwrite').delete(id)); }
   async clearAll(): Promise<void> {
+    await promisifyRequest(this.tx('learningPlans', 'readwrite').clear());
     await promisifyRequest(this.tx('trainees', 'readwrite').clear());
     await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').clear());
     await promisifyRequest(this.tx(STORE_SESSIONS, 'readwrite').clear());

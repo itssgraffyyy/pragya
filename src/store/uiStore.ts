@@ -15,7 +15,8 @@ export type Screen =
   | 'settings'
   | 'history'
   | 'trainees'
-  | 'learning';
+  | 'learning'
+  | 'adaptive';
 
 interface UiStore {
   screen: Screen;

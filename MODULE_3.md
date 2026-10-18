@@ -26,3 +26,8 @@ Baseline validation completed: build passed; 114/114 unit/component tests passed
 ## Longitudinal blind spots
 
 The existing Module 2 detector now optionally exposes sparse observations and exact session/contact references; default behavior is unchanged. Longitudinal analysis uses these predicates, groups compatible policy/condition cohorts, deduplicates records and distinguishes isolated mistakes from recurring patterns. Improvement compares early versus recent error rates only with at least four comparable sessions; it does not infer improvement from an overall score. Legacy associations are projected to the profile only during analysis; original assessment identity is retained.
+## Recommendations
+
+A deterministic offline rule engine ranks actual measured gaps, recurring patterns, assigned objectives and coverage. It uses existing objective IDs and bundled scenario references, not hardcoded trainee results. Sparse history produces a baseline recommendation. Active recommendations are deduplicated by target/cohort; identical dismissed evidence is not reissued. Strong repeated performance broadens conditions one tier at a time. Recommendations expose target, objective, reason, source assessments, supported generator constraints, difficulty, priority and status.
+
+IndexedDB v3 adds learningPlans without modifying historical records. Plans persist recommendations and longitudinal pattern evidence. Schema-versioned exercise trace contracts are defined for the next integration milestone.
