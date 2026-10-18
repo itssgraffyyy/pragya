@@ -1,3 +1,4 @@
+import { DataTransferScreen } from './ui/DataTransferScreen';
 import { UnitAnalyticsScreen } from './ui/UnitAnalyticsScreen';
 import { InstructorScreen } from './ui/InstructorScreen';
 import { CrewScreen } from './ui/CrewScreen';
@@ -23,7 +24,7 @@ import { SessionSummaryScreen } from './ui/SessionSummaryScreen';
 import { InstructorEditorScreen } from './ui/InstructorEditorScreen';
 import { SettingsScreen } from './ui/SettingsScreen';
 import { HistoryScreen } from './ui/HistoryScreen';
-import { initStorage } from './core/persistence/appStorage';
+import { initStorage,getStorageWarning } from './core/persistence/appStorage';
 
 export default function App() {
   const screen = useUiStore((s) => s.screen);
@@ -36,6 +37,7 @@ export default function App() {
     initStorage()
       .then(async (storage) => {
         if (cancelled) return;
+        setBootError(getStorageWarning());
         const settings = await storage.getSettings();
         hydrate(settings);
       })
@@ -74,6 +76,7 @@ export default function App() {
         </div>
       )}
       <RoleBoundary screen={screen}>
+      {screen === 'transfer' && <DataTransferScreen />}
       {screen === 'analytics' && <UnitAnalyticsScreen />}
       {screen === 'instructor' && <InstructorScreen />}
       {screen === 'crew' && <CrewScreen />}

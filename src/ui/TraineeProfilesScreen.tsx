@@ -2,7 +2,7 @@ import { LearningNav } from './LearningNav';
 import { useEffect, useState } from 'react';
 import { initStorage } from '../core/persistence/appStorage';
 import { createProfile, traineeProfileSchema, type TraineeProfile } from '../core/learning/profile';
-import { associateLegacy, exportTrainee, importTrainee, traineeHistory } from '../core/learning/trainees';
+import { deleteProfileSafely, associateLegacy, exportTrainee, importTrainee, traineeHistory } from '../core/learning/trainees';
 import type { StoredSession } from '../core/persistence/storage';
 import { useSettingsStore } from '../store/settingsStore';
 import { useUiStore } from '../store/uiStore';
@@ -51,7 +51,7 @@ export function TraineeProfilesScreen() {
       <button className="border px-3 py-1" onClick={() => setDraft(selected)}>Edit selected</button>{' '}
       <button className="border px-3 py-1" onClick={() => void run(async () => { await (await initStorage()).saveTrainee({ ...selected, archived: !selected.archived }); })}>{selected.archived ? 'Restore profile' : 'Archive profile'}</button>{' '}
       <button className="border px-3 py-1" onClick={() => void run(async () => { downloadJson(`pragya-trainee-${selected.id}.json`, await exportTrainee(await initStorage(), selected)); })}>Export profile data</button>{' '}
-      <button className="border px-3 py-1" onClick={() => { if (window.confirm('Delete this profile? Session records will be retained for explicit legacy association.')) void run(async () => { await (await initStorage()).deleteTrainee(selected.id); useSettingsStore.getState().update({ traineeId: 'trainee-001' }); }); }}>Delete profile</button>
+      <button className="border px-3 py-1" onClick={() => { if (window.confirm('Delete this profile? Session records will be retained for explicit legacy association.')) void run(async () => { await deleteProfileSafely(await initStorage(),selected.id); useSettingsStore.getState().update({ traineeId: 'trainee-001' }); }); }}>Delete profile</button>
       <label className="block">Legacy session ID <input aria-label="Legacy session ID" className="bg-console-bg border p-1" value={legacyId} onChange={(e) => setLegacyId(e.target.value)}/></label>
       <button className="border px-3 py-1" onClick={() => void run(async () => { await associateLegacy(await initStorage(), selected, legacyId); })}>Associate legacy session</button>
       {sessions.map((s) => <div key={s.summary.sessionId}><button className="underline" onClick={() => setReview(s)}>{s.summary.sessionId}: {s.summary.scenarioTitle} ({s.summary.endedAt})</button>{!s.assessment && ' - legacy record: no saved assessment; excluded from Skill DNA'}</div>)}

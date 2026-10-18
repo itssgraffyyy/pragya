@@ -39,7 +39,7 @@ export function conditionsFor(s: StoredSession) {
   };
 }
 export function cohortKey(s: StoredSession): string {
-  return stableKey({ policyId:s.assessment?.policyId, policyVersion:s.assessment?.policyVersion, policy:s.scoringPolicy ?? 'snapshot-unavailable', conditions:conditionsFor(s) });
+  return stableKey({ policyId:s.assessment?.policyId, policyVersion:s.assessment?.policyVersion, policy:s.scoringPolicy ?? ('snapshot-unavailable:'+s.summary.sessionId), conditions:conditionsFor(s) });
 }
 export function measuredSessions(profile: TraineeProfile, sessions: StoredSession[]): StoredSession[] {
   return [...new Map(sessions.filter((s)=>validSession(s) && s.summary.status==='completed' && s.assessment && s.assessment.contacts.some((c)=>c.assessable) &&

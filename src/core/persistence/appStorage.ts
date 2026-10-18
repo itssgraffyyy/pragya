@@ -8,6 +8,8 @@ import type { StorageAdapter } from './storage';
 import { IndexedDbStorage } from './indexedDbStorage';
 import { MemoryStorage } from './memoryStorage';
 
+let storageWarning:string|null=null;
+export function getStorageWarning(){return storageWarning;}
 let instance: StorageAdapter | null = null;
 let initPromise: Promise<StorageAdapter> | null = null;
 
@@ -15,6 +17,7 @@ let initPromise: Promise<StorageAdapter> | null = null;
 export function getStorage(): StorageAdapter {
   if (!instance) {
     instance = typeof indexedDB !== 'undefined' ? new IndexedDbStorage() : new MemoryStorage();
+    if(instance instanceof MemoryStorage)storageWarning='Persistent storage unavailable; this session uses temporary memory. Export data before closing.';
   }
   return instance;
 }
@@ -28,6 +31,7 @@ export function initStorage(): Promise<StorageAdapter> {
       .then(() => adapter)
       .catch((e) => {
         console.warn('IndexedDB init failed; falling back to in-memory storage.', e);
+        storageWarning='IndexedDB could not open; existing data was retained. Changes use temporary memory. Export before closing and check the browser profile/database version.';
         const memory = new MemoryStorage();
         instance = memory;
         return memory.init().then(() => memory);

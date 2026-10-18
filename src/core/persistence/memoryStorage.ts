@@ -1,3 +1,4 @@
+import type { LocalDataBundle,LocalDataKind } from './storage';
 import type { TrainingKind, TrainingRecord } from '../unit/models';
 import type { LearningPlan } from '../learning/plan';
 import type { TraineeProfile } from '../learning/profile';
@@ -17,13 +18,14 @@ import {
 export class MemoryStorage implements StorageAdapter {
   private training = new Map<string, TrainingRecord>();
   async listTrainingRecords(kind:TrainingKind):Promise<TrainingRecord[]> { return structuredClone([...this.training.values()].filter(r=>r.kind===kind)); }
-  async saveTrainingRecords(records:TrainingRecord[]):Promise<void> { for(const r of records)this.training.set(r.kind+':'+r.id,structuredClone(r)); }
+  async saveTrainingRecords(records:TrainingRecord[],insertOnly=false):Promise<void> { const values=structuredClone(records);if(insertOnly&&values.some(r=>this.training.has(r.kind+':'+r.id)))throw new Error('Record already exists');for(const r of values)this.training.set(r.kind+':'+r.id,r); }
   private plans = new Map<string, LearningPlan>();
   private trainees = new Map<string, TraineeProfile>();
   private scenarios = new Map<string, ScenarioDefinition>();
   private sessions = new Map<string, StoredSession>();
   private settings: AppSettings = { ...DEFAULT_SETTINGS };
 
+  async saveLocalBundle(input:LocalDataBundle,insertOnly:readonly LocalDataKind[]=[]):Promise<void>{const b=structuredClone(input);if(insertOnly.includes('scenarios')&&b.scenarios.some(x=>this.scenarios.has(x.id))||insertOnly.includes('sessions')&&b.sessions.some(x=>this.sessions.has(x.summary.sessionId))||insertOnly.includes('trainees')&&b.trainees.some(x=>this.trainees.has(x.id))||insertOnly.includes('plans')&&b.plans.some(x=>this.plans.has(x.traineeId))||insertOnly.includes('training')&&b.training.some(x=>this.training.has(x.kind+':'+x.id)))throw new Error('Import commit conflict; local records preserved');for(const x of b.scenarios)this.scenarios.set(x.id,x);for(const x of b.sessions)this.sessions.set(x.summary.sessionId,x);for(const x of b.trainees)this.trainees.set(x.id,x);for(const x of b.plans)this.plans.set(x.traineeId,x);for(const x of b.training)this.training.set(x.kind+':'+x.id,x);if(b.settings)this.settings=b.settings;}
   async init(): Promise<void> {
     // Nothing to initialize.
   }
@@ -41,7 +43,7 @@ export class MemoryStorage implements StorageAdapter {
   }
 
   async saveScenarioPublication(scenario:ScenarioDefinition,records:TrainingRecord[]):Promise<void> {
-    const bundle=structuredClone({scenario,records});this.scenarios.set(bundle.scenario.id,bundle.scenario);for(const r of bundle.records)this.training.set(r.kind+':'+r.id,r);
+    const bundle=structuredClone({scenario,records});if(bundle.records.some(r=>r.kind==='scenarioVersions'&&this.training.has(r.kind+':'+r.id)))throw new Error('Scenario version already exists');this.scenarios.set(bundle.scenario.id,bundle.scenario);for(const r of bundle.records)this.training.set(r.kind+':'+r.id,r);
   }
   async deleteScenario(id: string): Promise<void> {
     this.scenarios.delete(id);
@@ -80,6 +82,7 @@ export class MemoryStorage implements StorageAdapter {
     await this.saveTrainee(profile);
     if(plan) await this.saveLearningPlan(plan);
   }
+  async listLearningPlans():Promise<LearningPlan[]> { return structuredClone([...this.plans.values()]); }
   async getLearningPlan(id: string): Promise<LearningPlan | undefined> { return structuredClone(this.plans.get(id)); }
   async saveLearningPlan(plan: LearningPlan): Promise<void> { this.plans.set(plan.traineeId, structuredClone(plan)); }
   async deleteLearningPlan(id: string): Promise<void> { this.plans.delete(id); }

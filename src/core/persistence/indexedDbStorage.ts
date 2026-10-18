@@ -1,3 +1,4 @@
+import type { LocalDataBundle,LocalDataKind } from './storage';
 import type { TrainingKind, TrainingRecord } from '../unit/models';
 import type { LearningPlan } from '../learning/plan';
 import type { TraineeProfile } from '../learning/profile';
@@ -60,6 +61,10 @@ export class IndexedDbStorage implements StorageAdapter {
     return this.db.transaction(store, mode).objectStore(store);
   }
 
+  async saveLocalBundle(b:LocalDataBundle,insertOnly:readonly LocalDataKind[]=[]):Promise<void>{
+    if(!this.db)throw new Error('Storage not initialized');
+    await new Promise<void>((resolve,reject)=>{const tx=this.db!.transaction([STORE_SCENARIOS,STORE_SESSIONS,STORE_SETTINGS,'trainees','learningPlans','training'],'readwrite');tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Local import aborted'));try{for(const x of b.scenarios)tx.objectStore(STORE_SCENARIOS)[insertOnly.includes('scenarios')?'add':'put'](x);for(const x of b.sessions)tx.objectStore(STORE_SESSIONS)[insertOnly.includes('sessions')?'add':'put'](x);for(const x of b.trainees)tx.objectStore('trainees')[insertOnly.includes('trainees')?'add':'put'](x);for(const x of b.plans)tx.objectStore('learningPlans')[insertOnly.includes('plans')?'add':'put'](x);for(const x of b.training)tx.objectStore('training')[insertOnly.includes('training')?'add':'put'](x);if(b.settings)tx.objectStore(STORE_SETTINGS).put(b.settings,SETTINGS_KEY);}catch(error){tx.abort();reject(error);}});
+  }
   async listScenarios(): Promise<ScenarioDefinition[]> {
     return promisifyRequest(this.tx(STORE_SCENARIOS, 'readonly').getAll());
   }
@@ -74,7 +79,7 @@ export class IndexedDbStorage implements StorageAdapter {
 
   async saveScenarioPublication(scenario:ScenarioDefinition,records:TrainingRecord[]):Promise<void> {
     if(!this.db)throw new Error('Storage not initialized');
-    await new Promise<void>((resolve,reject)=>{const tx=this.db!.transaction([STORE_SCENARIOS,'training'],'readwrite');tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Scenario publication aborted'));try{tx.objectStore(STORE_SCENARIOS).put(scenario);for(const record of records)tx.objectStore('training').put(record);}catch(error){tx.abort();reject(error);}});
+    await new Promise<void>((resolve,reject)=>{const tx=this.db!.transaction([STORE_SCENARIOS,'training'],'readwrite');tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Scenario publication aborted'));try{tx.objectStore(STORE_SCENARIOS).put(scenario);for(const record of records)tx.objectStore('training')[record.kind==='scenarioVersions'?'add':'put'](record);}catch(error){tx.abort();reject(error);}});
   }
   async deleteScenario(id: string): Promise<void> {
     await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').delete(id));
@@ -110,9 +115,9 @@ export class IndexedDbStorage implements StorageAdapter {
   async listTrainingRecords(kind:TrainingKind):Promise<TrainingRecord[]> {
     const all:TrainingRecord[]=await promisifyRequest(this.tx('training','readonly').getAll());return all.filter(r=>r.kind===kind);
   }
-  async saveTrainingRecords(records:TrainingRecord[]):Promise<void> {
+  async saveTrainingRecords(records:TrainingRecord[],insertOnly=false):Promise<void> {
     if(!this.db)throw new Error('Storage not initialized');
-    await new Promise<void>((resolve,reject)=>{ const tx=this.db!.transaction('training','readwrite');tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Training write aborted'));for(const r of records)tx.objectStore('training').put(r); });
+    await new Promise<void>((resolve,reject)=>{const tx=this.db!.transaction('training','readwrite');tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Training write aborted'));try{for(const r of records)tx.objectStore('training')[insertOnly?'add':'put'](r);}catch(error){tx.abort();reject(error);}});
   }
   async listTrainees(): Promise<TraineeProfile[]> { return promisifyRequest(this.tx('trainees', 'readonly').getAll()); }
   async getTrainee(id: string): Promise<TraineeProfile | undefined> { return promisifyRequest(this.tx('trainees', 'readonly').get(id)); }
@@ -128,6 +133,7 @@ export class IndexedDbStorage implements StorageAdapter {
       for (const s of sessions) tx.objectStore(STORE_SESSIONS).put(s);
     });
   }
+  async listLearningPlans():Promise<LearningPlan[]> { return promisifyRequest(this.tx('learningPlans','readonly').getAll()); }
   async getLearningPlan(id: string): Promise<LearningPlan | undefined> { return promisifyRequest(this.tx('learningPlans', 'readonly').get(id)); }
   async saveLearningPlan(plan: LearningPlan): Promise<void> { await promisifyRequest(this.tx('learningPlans', 'readwrite').put(plan)); }
   async deleteLearningPlan(id: string): Promise<void> { await promisifyRequest(this.tx('learningPlans', 'readwrite').delete(id)); }

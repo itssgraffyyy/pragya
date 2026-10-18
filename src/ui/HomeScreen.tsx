@@ -1,3 +1,4 @@
+import { OfflineStatus } from './OfflineStatus';
 /**
  * Home screen — entry point.
  */
@@ -8,6 +9,7 @@ import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
 export function HomeScreen() {
   const navigate = useUiStore((s) => s.navigate);
   const cards: { title: string; subtitle: string; action: () => void }[] = [
+    { title: 'Backups & Transfer', subtitle: 'Validated offline backup, recovery and portable training records', action: () => navigate('transfer') },
     { title: 'Unit Intelligence', subtitle: 'Evidence-based competency heatmaps and training coverage', action: () => navigate('analytics') },
     { title: 'Instructor & Assignments', subtitle: 'Scenario control, policy versions, assigned exercises and reviews', action: () => navigate('instructor') },
     { title: 'Duo Crew Mode', subtitle: 'One shared scenario, structured communication and crew review', action: () => navigate('crew') },
@@ -46,7 +48,7 @@ export function HomeScreen() {
 
   return (
     <div className="min-h-full flex flex-col items-center justify-center gap-8 p-8">
-      <div className="text-center">
+      <div className="text-center"><OfflineStatus/>
         <h1 className="text-4xl font-bold tracking-wide text-console-accent">PRAGYA</h1>
         <p className="mt-2 text-console-muted max-w-xl">
           Personalized Readiness &amp; Adaptive Guidance for Aerial Threat Awareness —

@@ -40,10 +40,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
   audioEnabled: false,
 };
 
+export type LocalDataKind='scenarios'|'sessions'|'trainees'|'plans'|'training';
+export interface LocalDataBundle { scenarios:ScenarioDefinition[]; sessions:StoredSession[]; trainees:TraineeProfile[]; plans:LearningPlan[]; training:TrainingRecord[]; settings?:AppSettings }
 export interface StorageAdapter {
   init(): Promise<void>;
+  saveLocalBundle(bundle:LocalDataBundle,insertOnly?:readonly LocalDataKind[]):Promise<void>;
   listTrainingRecords(kind: TrainingKind): Promise<TrainingRecord[]>;
-  saveTrainingRecords(records: TrainingRecord[]): Promise<void>;
+  saveTrainingRecords(records: TrainingRecord[],insertOnly?:boolean): Promise<void>;
   // Scenarios
   listScenarios(): Promise<ScenarioDefinition[]>;
   getScenario(id: string): Promise<ScenarioDefinition | undefined>;
@@ -63,6 +66,7 @@ export interface StorageAdapter {
   saveTrainee(profile: TraineeProfile): Promise<void>;
   deleteTrainee(id: string): Promise<void>;
   saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[], plan?: LearningPlan): Promise<void>;
+  listLearningPlans():Promise<LearningPlan[]>;
   getLearningPlan(traineeId: string): Promise<LearningPlan | undefined>;
   saveLearningPlan(plan: LearningPlan): Promise<void>;
   deleteLearningPlan(traineeId: string): Promise<void>;

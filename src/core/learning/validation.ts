@@ -1,3 +1,4 @@
+import { SIMULATION_EVENT_TYPES } from '../types';
 import { z } from 'zod';
 import { scenarioDefinitionSchema, confidenceLevelSchema, evidenceItemSchema, contactCategorySchema, proceduralResponseSchema } from '../scenario/schema';
 import { scoringPolicySchema } from '../scoring/policy';
@@ -22,13 +23,15 @@ export const assessmentSchema = z.object({
   explanations: z.array(z.object({ contactId: z.string(), category: z.enum(['detection','classification','procedural','evidence','confidence']), whatHappened: z.string(), availableInfo: z.string(), ruleRef: z.string(), why: z.string(), revisitObjective: z.string() }).passthrough()),
   calculatedAt: z.string().datetime(),
 }).passthrough();
+export const simulationEventSchema=z.object({eventId:z.string().min(1),sessionId:z.string().min(1),traineeId:z.string().min(1),scenarioId:z.string().min(1),scenarioVersion:z.string().min(1),simTimestamp:z.number().finite().nonnegative(),type:z.enum(SIMULATION_EVENT_TYPES),contactId:z.string().optional(),classification:classification.optional(),confidence:confidenceLevelSchema.optional(),evidence:z.array(evidenceItemSchema).max(8).optional(),proceduralResponse:proceduralResponseSchema.optional(),actionDetails:z.record(z.union([z.string(),z.number().finite(),z.boolean(),z.array(z.string())])).optional(),sensorState:z.record(z.string()).optional()}).passthrough();
+export const sessionEventLogSchema=z.object({logVersion:z.literal(1),exportedAt:z.string().datetime(),events:z.array(simulationEventSchema).max(100000)});
 export const storedSessionSchema = z.object({
   summary: z.object({ sessionId: z.string().min(1), traineeId: z.string().min(1), scenarioId: z.string(), scenarioVersion: z.string(), scenarioTitle: z.string(), seed: z.number().int().nonnegative(),
-    startedAt: z.string().datetime(), endedAt: z.string().datetime(), durationSimSeconds: z.number().nonnegative(), status: z.enum(['completed','aborted','error']), eventCount: z.number().int().nonnegative(),
+    startedAt: z.string().datetime(), endedAt: z.string().datetime(), durationSimSeconds: z.number().finite().nonnegative(), status: z.enum(['completed','aborted','error']), eventCount: z.number().int().nonnegative(),
     assessments: z.array(z.object({ contactId: z.string(), submittedClassification: classification.nullable(), groundTruth: contactCategorySchema, correct: z.boolean().nullable(), confidence: confidenceLevelSchema.nullable(), evidence: z.array(evidenceItemSchema), proceduralResponse: proceduralResponseSchema.nullable() })),
     scenarioSnapshot: scenarioDefinitionSchema,
   }).passthrough(),
-  events: z.object({ logVersion: z.literal(1), exportedAt: z.string().datetime(), events: z.array(z.object({ eventId: z.string(), sessionId: z.string(), traineeId: z.string(), scenarioId: z.string(), scenarioVersion: z.string(), simTimestamp: z.number().nonnegative(), type: z.string() }).passthrough()) }),
+  events: sessionEventLogSchema,
   assessment: assessmentSchema.optional(), scoringPolicy: scoringPolicySchema.optional(),
 }).passthrough().superRefine((s, ctx) => {
   const a = s.assessment;
@@ -37,6 +40,8 @@ export const storedSessionSchema = z.object({
   if (s.summary.scenarioId !== s.summary.scenarioSnapshot.id || s.summary.scenarioVersion !== s.summary.scenarioSnapshot.version) ctx.addIssue({ code: 'custom', message: 'Scenario snapshot does not match session' });
   if (s.events.events.some((e) => e.sessionId !== s.summary.sessionId || e.traineeId !== s.summary.traineeId)) ctx.addIssue({ code: 'custom', message: 'Foreign event in session' });
   const ids=new Set(s.summary.scenarioSnapshot.contacts.map((c)=>c.id));
+  if(s.events.events.some(e=>e.scenarioId!==s.summary.scenarioId||e.scenarioVersion!==s.summary.scenarioVersion||(e.contactId&&!ids.has(e.contactId))))ctx.addIssue({code:'custom',message:'Foreign scenario/contact event'});
+  if(new Set(s.events.events.map(e=>e.eventId)).size!==s.events.events.length)ctx.addIssue({code:'custom',message:'Duplicate event identifier'});
   if(a?.contacts.some((c)=>!ids.has(c.contactId)))ctx.addIssue({code:'custom',message:'Unknown contact in assessment'});
   if (a && new Set(a.contacts.map((c) => c.contactId)).size !== a.contacts.length) ctx.addIssue({ code: 'custom', message: 'Duplicate contact score' });
 });

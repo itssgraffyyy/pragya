@@ -1,0 +1,12 @@
+﻿import { it,expect } from 'vitest';
+import { spawn } from 'node:child_process';
+import { mkdtemp,mkdir,copyFile,writeFile,unlink,rmdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join,resolve } from 'node:path';
+it('serves a built offline directory without dependencies, rejects traversal and write methods',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'pragya-offline-test-'));const scripts=join(directory,'scripts'),dist=join(directory,'dist');await mkdir(scripts);await mkdir(dist);const script=join(scripts,'serve-offline.mjs');await copyFile(resolve('scripts/serve-offline.mjs'),script);await writeFile(join(dist,'index.html'),'<h1>Offline fixture</h1>');await writeFile(join(dist,'sw.js'),'self.test=true;');
+ const child=spawn(process.execPath,[script],{cwd:directory,env:{...process.env,PRAGYA_PORT:'0'},windowsHide:true});let output='';let error='';child.stderr.on('data',chunk=>error+=String(chunk));
+ try{const url=await new Promise<string>((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error(`Offline server startup timed out: ${error}`)),20000);child.stdout.on('data',chunk=>{output+=String(chunk);const match=output.match(/http:\/\/localhost:\d+/);if(match){clearTimeout(timeout);resolve(match[0]);}});child.once('error',e=>{clearTimeout(timeout);reject(e);});child.once('exit',code=>{if(code){clearTimeout(timeout);reject(new Error(error));}});});
+ const page=await fetch(url);expect(page.status).toBe(200);expect(await page.text()).toContain('Offline fixture');expect(page.headers.get('cache-control')).toBe('no-cache');expect((await fetch(`${url}/sw.js`)).headers.get('content-type')).toContain('javascript');expect((await fetch(`${url}/`,{method:'POST'})).status).toBe(405);expect((await fetch(`${url}/%2e%2e%2fpackage.json`)).status).toBe(403);expect((await fetch(`${url}/src/core/types.ts`)).status).toBe(404);expect((await fetch(`${url}/%00bad`)).status).toBe(400);const head=await fetch(url,{method:'HEAD'});expect(head.status).toBe(200);expect(await head.text()).toBe('');
+ }finally{if(child.exitCode===null&&child.signalCode===null){await new Promise<void>(resolve=>{child.once('exit',()=>resolve());child.kill();});}if(!resolve(directory).startsWith(resolve(tmpdir())+'\\pragya-offline-test-')&&!resolve(directory).startsWith(resolve(tmpdir())+'/pragya-offline-test-'))throw new Error('Temporary cleanup target mismatch');for(const file of [join(dist,'index.html'),join(dist,'sw.js'),script])await unlink(file);await rmdir(scripts);await rmdir(dist);await rmdir(directory);}
+},30000);

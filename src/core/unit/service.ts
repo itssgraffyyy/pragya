@@ -5,9 +5,9 @@ import { trainingSchemas, type TrainingKind, type TrainingRecords, type LocalAct
 export async function records<K extends TrainingKind>(storage:StorageAdapter,kind:K):Promise<TrainingRecords[K][]> {
   return (await storage.listTrainingRecords(kind)).map(r=>trainingSchemas[kind].parse(r.value) as TrainingRecords[K]);
 }
-export async function writeRecord<K extends TrainingKind>(storage:StorageAdapter,kind:K,value:TrainingRecords[K]) {
+export async function writeRecord<K extends TrainingKind>(storage:StorageAdapter,kind:K,value:TrainingRecords[K],insertOnly=false) {
   const parsed=trainingSchemas[kind].parse(value) as TrainingRecords[K];
-  await storage.saveTrainingRecords([{kind,id:parsed.id,value:parsed} as TrainingRecord]);
+  await storage.saveTrainingRecords([{kind,id:parsed.id,value:parsed} as TrainingRecord],insertOnly);
 }
 export async function authorize(storage:StorageAdapter,actor:LocalActor,unitId:string,permission:Permission,traineeId?:string) {
   const user=(await records(storage,'users')).find(u=>u.id===actor.userId&&!u.archived);

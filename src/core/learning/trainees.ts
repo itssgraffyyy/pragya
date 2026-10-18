@@ -1,3 +1,4 @@
+import { records } from '../unit/service';
 import { serializeLearning } from './queue';
 import { stableKey } from './skillDNA';
 import { learningPlanSchema } from './plan';
@@ -26,12 +27,15 @@ export async function associateLegacy(storage: StorageAdapter, profile: TraineeP
   const updated = traineeProfileSchema.parse({ ...profile, legacySessionIds: [...new Set([...profile.legacySessionIds, sessionId])] });
   await storage.saveTrainee(updated); return updated;
 }
+export function profileWithSession(profile:TraineeProfile,session:StoredSession):TraineeProfile {
+  if(profile.id!==session.summary.traineeId)throw new Error('Session/profile owner mismatch');
+  return {...profile,completedSessionIds:session.summary.status==='completed'?[...new Set([...profile.completedSessionIds,session.summary.sessionId])]:profile.completedSessionIds,lastActiveAt:Date.parse(session.summary.endedAt)>Date.parse(profile.lastActiveAt)?session.summary.endedAt:profile.lastActiveAt};
+}
 export async function recordProfileSession(storage: StorageAdapter, session: StoredSession): Promise<void> {
   return serializeLearning(session.summary.traineeId, async()=>{
   const p = await storage.getTrainee(session.summary.traineeId);
   if (!p) return; // Legacy IDs are never silently assigned to the active profile.
-  const completedSessionIds = session.summary.status === 'completed' ? [...new Set([...p.completedSessionIds, session.summary.sessionId])] : p.completedSessionIds;
-  await storage.saveTrainee({ ...p, completedSessionIds, lastActiveAt: session.summary.endedAt });
+  await storage.saveTrainee(profileWithSession(p,session));
   });
 }
 export async function exportTrainee(storage: StorageAdapter, profile: TraineeProfile) {
@@ -59,3 +63,5 @@ export async function importTrainee(storage: StorageAdapter, value: unknown): Pr
   await storage.saveTraineeBundle(bundle.profile, sessions, bundle.plan);
   return bundle.profile;
 }
+
+export async function deleteProfileSafely(storage:StorageAdapter,id:string){if((await records(storage,'users')).some(u=>u.traineeId===id))throw new Error('Archive unit trainees instead of deleting their linked profile; unit history must remain attributable.');await storage.deleteTrainee(id);}

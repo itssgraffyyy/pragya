@@ -316,30 +316,32 @@ export const SIMULATION_TRANSITIONS: Record<SimulationState, SimulationState[]> 
 // Event log (contract for Module 2 scoring)
 // ---------------------------------------------------------------------------
 
-export type SimulationEventType =
-  | 'sessionStarted'
-  | 'sessionPaused'
-  | 'sessionResumed'
-  | 'sessionCompleted'
-  | 'sessionAborted'
-  | 'sessionRestarted'
-  | 'contactSpawned'
-  | 'contactDespawned'
-  | 'contactBecameVisible'
-  | 'contactOccluded'
-  | 'contactAcknowledged'
-  | 'contactMarkedUncertain'
-  | 'verificationRequested'
-  | 'classificationSubmitted'
-  | 'confidenceChanged'
-  | 'evidenceSelected'
-  | 'evidenceDeselected'
-  | 'proceduralResponseSelected'
-  | 'assessmentSubmitted'
-  | 'sensorStateChanged'
-  | 'environmentChanged'
-  | 'timedEventOccurred'
-  | 'errorOccurred';
+export const SIMULATION_EVENT_TYPES = [
+  'sessionStarted',
+  'sessionPaused',
+  'sessionResumed',
+  'sessionCompleted',
+  'sessionAborted',
+  'sessionRestarted',
+  'contactSpawned',
+  'contactDespawned',
+  'contactBecameVisible',
+  'contactOccluded',
+  'contactAcknowledged',
+  'contactMarkedUncertain',
+  'verificationRequested',
+  'classificationSubmitted',
+  'confidenceChanged',
+  'evidenceSelected',
+  'evidenceDeselected',
+  'proceduralResponseSelected',
+  'assessmentSubmitted',
+  'sensorStateChanged',
+  'environmentChanged',
+  'timedEventOccurred',
+  'errorOccurred',
+] as const;
+export type SimulationEventType = typeof SIMULATION_EVENT_TYPES[number];
 
 export interface SimulationEvent {
   eventId: string;
