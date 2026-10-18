@@ -13,6 +13,7 @@ function session() {
 }
 
 describe('assessment dashboard', () => {
+  it('explicitly labels review-time recalculation when a legacy record lacks its original assessment',async()=>{const legacy=session();delete legacy.assessment;await act(async()=>{render(<AssessmentDashboard session={legacy} historySessions={[]}/>);});expect(screen.getByText(/Legacy recalculation/)).toBeVisible();});
   it('shows scores and replay and rejects invalid policies without replacing results', async () => {
     await act(async () => { render(<AssessmentDashboard session={session()} />); });
     expect(screen.getByTestId('assessment-overall')).toHaveTextContent('0.0 / 100');

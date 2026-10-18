@@ -9,7 +9,8 @@ import { storedSessionSchema, validSession } from './validation';
 export interface TraineeHistory { sessions: StoredSession[]; warnings: string[] }
 export async function traineeHistory(storage: StorageAdapter, profile: TraineeProfile): Promise<TraineeHistory> {
   const warnings: string[] = [];
-  const profiles = await storage.listTrainees();
+  const profiles = (await storage.listTrainees()).flatMap((p)=>{const parsed=traineeProfileSchema.safeParse(p);if(parsed.success)return [parsed.data];return [];});
+  if(profiles.length!==(await storage.listTrainees()).length)warnings.push('A corrupt trainee profile was excluded.');
   const sessions = (await storage.listSessions()).filter((s) => {
     if (!validSession(s)) { warnings.push('A corrupt session was excluded.'); return false; }
     const owner = profiles.find((p) => p.id === s.summary.traineeId || p.legacySessionIds.includes(s.summary.sessionId));
@@ -20,7 +21,7 @@ export async function traineeHistory(storage: StorageAdapter, profile: TraineePr
 export async function associateLegacy(storage: StorageAdapter, profile: TraineeProfile, sessionId: string): Promise<TraineeProfile> {
   const s = await storage.getSession(sessionId);
   if (!s || !validSession(s)) throw new Error('Valid legacy session not found');
-  const profiles = await storage.listTrainees();
+  const profiles = (await storage.listTrainees()).flatMap((p)=>{const parsed=traineeProfileSchema.safeParse(p);if(parsed.success)return [parsed.data];return [];});
   if (profiles.some((p) => p.id !== profile.id && (p.id === s.summary.traineeId || p.legacySessionIds.includes(sessionId)))) throw new Error('Session already belongs to another profile');
   const updated = traineeProfileSchema.parse({ ...profile, legacySessionIds: [...new Set([...profile.legacySessionIds, sessionId])] });
   await storage.saveTrainee(updated); return updated;
@@ -49,6 +50,11 @@ export async function importTrainee(storage: StorageAdapter, value: unknown): Pr
     if (existingProfiles.some((p) => p.id === s.summary.traineeId || p.legacySessionIds.includes(s.summary.sessionId))) throw new Error('Session owned by another local profile');
     const existing = await storage.getSession(s.summary.sessionId);
     if (existing && stableKey(existing) !== stableKey(s)) throw new Error('Conflicting session ID; original record preserved');
+  }
+  if(bundle.plan){
+    const references=[...bundle.plan.recommendations.flatMap((r)=>r.evidenceSessionIds),...bundle.plan.exercises.flatMap((e)=>e.sessionId?[e.sessionId]:[]),...bundle.plan.patterns.flatMap((p)=>p.evidence.map((e)=>e.sessionId))];
+    for(const id of new Set(references)){const s=sessions.find((s)=>s.summary.sessionId===id)??await storage.getSession(id);if(!s||(s.summary.traineeId!==bundle.profile.id&&!bundle.profile.legacySessionIds.includes(id)))throw new Error('Unknown or foreign assessment reference in learning plan');}
+    if(bundle.plan.exercises.some((e)=>e.seed!==e.config.seed||e.seed!==e.scenario.seed))throw new Error('Exercise seed/configuration mismatch');
   }
   await storage.saveTraineeBundle(bundle.profile, sessions, bundle.plan);
   return bundle.profile;

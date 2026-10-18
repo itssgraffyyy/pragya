@@ -1,4 +1,5 @@
-﻿import { describe, expect, it } from 'vitest';
+import { refreshRecommendations } from '../core/learning/recommendations';
+import { describe, expect, it } from 'vitest';
 import 'fake-indexeddb/auto';
 import { MemoryStorage } from '../core/persistence/memoryStorage';
 import { IndexedDbStorage } from '../core/persistence/indexedDbStorage';
@@ -8,6 +9,7 @@ import { learningSession } from './learningFixtures';
 
 const profile = () => createProfile('Trainee One', '2026-10-01T00:00:00.000Z', 't1');
 describe('trainee profiles and history', () => {
+  it('exports learning plans and rejects foreign references atomically',async()=>{const s=new MemoryStorage();const p=profile();await s.saveTrainee(p);await s.saveSession(learningSession());await refreshRecommendations(s,p,'2026-10-18T00:00:00.000Z');const bundle=await exportTrainee(s,p);const target=new MemoryStorage();await importTrainee(target,JSON.parse(JSON.stringify(bundle)));expect(await target.getLearningPlan(p.id)).toEqual(bundle.plan);const bad=structuredClone(bundle);bad.plan!.recommendations[0].evidenceSessionIds=['foreign'];const empty=new MemoryStorage();await expect(importTrainee(empty,bad)).rejects.toThrow('foreign');expect(await empty.listTrainees()).toEqual([]);expect(await empty.listSessions()).toEqual([]);});
   it('creates, edits, archives and persists profiles without deleting sessions', async () => {
     const s = new MemoryStorage(); const p=profile(); await s.saveTrainee(p);
     await s.saveTrainee({ ...p, displayName:'Edited', archived:true });
@@ -36,6 +38,7 @@ describe('trainee profiles and history', () => {
     expect(()=>traineeProfileSchema.parse({ ...profile(), displayName:'' })).toThrow();
     const s=new MemoryStorage(); await s.saveTrainee(profile()); const invalid=learningSession(); invalid.assessment!.overall=NaN; await s.saveSession(invalid);
     const h=await traineeHistory(s,profile()); expect(h.sessions).toEqual([]); expect(h.warnings.length).toBe(1);
+    await s.saveTrainee({...profile(),id:'broken',displayName:''});expect((await traineeHistory(s,profile())).warnings.some((w)=>w.includes('profile'))).toBe(true);
     const legacy=learningSession('legacy'); delete legacy.assessment; await s.saveSession(legacy);
     expect((await traineeHistory(s,profile())).sessions[0].assessment).toBeUndefined();
   });

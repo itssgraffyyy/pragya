@@ -1,3 +1,4 @@
+import { createProfile } from '../core/learning/profile';
 // @vitest-environment jsdom
 import './setup';
 import { describe, expect, it, vi } from 'vitest';
@@ -16,6 +17,7 @@ describe('learning workspace UI',()=>{
     const confirm=vi.spyOn(window,'confirm').mockReturnValue(false);fireEvent.click(screen.getByText('Delete profile'));expect(confirm).toHaveBeenCalled();expect(await storage.listTrainees()).toHaveLength(1);confirm.mockRestore();
   });
   it('shows an honest empty Skill DNA and working learning navigation',async()=>{
+    const storage=await initStorage();const p=createProfile('Empty trainee');await storage.saveTrainee(p);useSettingsStore.getState().update({traineeId:p.id});
     render(<LearningScreen/>);await screen.findByTestId('skill-empty');expect(screen.getByText('Missing data is not a zero score.',{exact:false})).toBeVisible();
     fireEvent.click(screen.getByRole('button',{name:'Adaptive training'}));await waitFor(()=>expect(useUiStore.getState().screen).toBe('adaptive'));
   });

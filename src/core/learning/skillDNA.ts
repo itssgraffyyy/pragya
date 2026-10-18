@@ -1,4 +1,4 @@
-﻿import type { StoredSession } from '../persistence/storage';
+import type { StoredSession } from '../persistence/storage';
 import type { ContactScore } from '../scoring/results';
 import type { TraineeProfile } from './profile';
 import { validSession } from './validation';
@@ -42,7 +42,7 @@ export function cohortKey(s: StoredSession): string {
   return stableKey({ policyId:s.assessment?.policyId, policyVersion:s.assessment?.policyVersion, policy:s.scoringPolicy ?? 'snapshot-unavailable', conditions:conditionsFor(s) });
 }
 export function measuredSessions(profile: TraineeProfile, sessions: StoredSession[]): StoredSession[] {
-  return [...new Map(sessions.filter((s)=>validSession(s) && s.summary.status==='completed' && s.assessment &&
+  return [...new Map(sessions.filter((s)=>validSession(s) && s.summary.status==='completed' && s.assessment && s.assessment.contacts.some((c)=>c.assessable) &&
     (s.summary.traineeId===profile.id || profile.legacySessionIds.includes(s.summary.sessionId)))
     .map((s)=>[s.summary.sessionId,s])).values()].sort((a,b)=>a.summary.endedAt.localeCompare(b.summary.endedAt) || a.summary.sessionId.localeCompare(b.summary.sessionId));
 }
@@ -94,4 +94,12 @@ export function calculateSkillDNA(profile:TraineeProfile,sessions:StoredSession[
   }).sort((a,b)=>a.latestDate.localeCompare(b.latestDate) || a.key.localeCompare(b.key));
   const ids=new Set(eligible.map((s)=>s.summary.sessionId));
   return { traineeId:profile.id,cohorts,excludedSessionIds:sessions.filter((s)=>!ids.has(s.summary?.sessionId)).map((s)=>s.summary?.sessionId ?? 'corrupt'),measuredSessions:eligible.length,config };
+}
+
+export function competencyFindings(cohort:SkillCohort,config:SkillConfig=DEFAULT_SKILL_CONFIG){
+  const measured=cohort.competencies.filter((c)=>c.score!==null);
+  return {strongest:[...measured].sort((a,b)=>b.score!-a.score!).slice(0,3),weakest:[...measured].sort((a,b)=>a.score!-b.score!).slice(0,3),
+    improving:measured.filter((c)=>c.sessionCount>=config.minSessions&&c.trend!==null&&c.trend>=config.trendThreshold),
+    declining:measured.filter((c)=>c.sessionCount>=config.minSessions&&c.trend!==null&&c.trend<=-config.trendThreshold),
+    underAssessed:cohort.competencies.filter((c)=>c.sessionCount<config.minSessions)};
 }

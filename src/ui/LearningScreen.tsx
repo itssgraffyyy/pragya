@@ -3,7 +3,7 @@ import { longitudinalPatterns } from '../core/learning/longitudinal';
 import { useMemo, useState } from 'react';
 import { useUiStore } from '../store/uiStore';
 import { useTraineeLearning } from './useTraineeLearning';
-import { calculateSkillDNA, conditionsFor, type SkillCohort } from '../core/learning/skillDNA';
+import { calculateSkillDNA, competencyFindings, conditionsFor, type SkillCohort } from '../core/learning/skillDNA';
 import type { StoredSession } from '../core/persistence/storage';
 import { AssessmentDashboard } from './AssessmentDashboard';
 
@@ -21,6 +21,7 @@ export function LearningScreen() {
   const dna=useMemo(()=>data.profile?calculateSkillDNA(data.profile,filtered):null,[data.profile,filtered]);
   const patterns=useMemo(()=>data.profile?longitudinalPatterns(data.profile,filtered):[],[data.profile,filtered]);
   const cohort=dna?.cohorts.find((c)=>c.key===cohortId)??dna?.cohorts[dna.cohorts.length-1];
+  const findings=cohort?competencyFindings(cohort):null;
   if(data.loading)return <p role="status" className="p-6">Loading learning history...</p>;
   return <main className="p-6 max-w-6xl mx-auto space-y-4"><header className="flex justify-between"><h2 className="text-2xl">Skill DNA</h2><button onClick={()=>useUiStore.getState().navigate('home')}>Home</button></header><LearningNav/>
     {data.error&&<p role="alert">{data.error}</p>}
@@ -31,7 +32,7 @@ export function LearningScreen() {
       {!cohort?<section className="panel p-4" data-testid="skill-empty"><h3>No measured competencies yet</h3><p>Complete a baseline assessment. Missing data is not a zero score.</p><button className="border p-2" onClick={()=>useUiStore.getState().navigate('scenarios')}>Start baseline assessment</button></section>:<>
         <label>Comparable assessment cohort <select className="w-full bg-console-bg border p-2" aria-label="Assessment cohort" value={cohort.key} onChange={(e)=>setCohortId(e.target.value)}>{dna!.cohorts.map((c)=><option key={c.key} value={c.key}>{c.label} ({c.sessionIds.length} sessions)</option>)}</select></label>
         <section className="panel p-4"><SkillChart cohort={cohort}/></section>
-        <section className="panel p-4"><h3>Strengths and development areas</h3>{cohort.competencies.filter((c)=>['consistentStrength','developmentArea','improvementObserved'].includes(c.state)).map((c)=><p key={c.id}>{c.label}: {c.state} ({c.score?.toFixed(1)}). Supported by {c.evidence.map((e)=>e.sessionId).join(', ')}.</p>)}<p>Under-assessed: {cohort.competencies.filter((c)=>c.sessionCount<dna!.config.minSessions).map((c)=>c.label).join(', ')||'none'}.</p></section>
+        <section className="panel p-4"><h3>Strengths and development areas</h3><p>Highest measured scores: {findings?.strongest.map((c)=>`${c.label} ${c.score?.toFixed(1)} (${c.sessionCount} sessions)`).join(`; `)}. These rankings do not replace evidence-sufficiency indicators.</p><p>Lowest measured scores: {findings?.weakest.map((c)=>`${c.label} ${c.score?.toFixed(1)}`).join(`; `)}.</p><p>Declining comparable measurements: {findings?.declining.map((c)=>`${c.label}: ${c.trend} points; sessions ${c.evidence.map((p)=>p.sessionId).join(`, `)}`).join(`; `)||`none established`}.</p>{cohort.competencies.filter((c)=>['consistentStrength','developmentArea','improvementObserved'].includes(c.state)).map((c)=><p key={c.id}>{c.label}: {c.state} ({c.score?.toFixed(1)}). Supported by {c.evidence.map((e)=>e.sessionId).join(', ')}.</p>)}<p>Under-assessed: {cohort.competencies.filter((c)=>c.sessionCount<dna!.config.minSessions).map((c)=>c.label).join(', ')||'none'}.</p></section>
         <section className="panel p-4"><h3>Performance trends and supporting assessments</h3>{cohort.competencies.filter((c)=>c.evidence.length>0).map((c)=><details key={c.id}><summary>{c.label}: {c.evidence.length} assessment points</summary>
           <svg viewBox="0 0 500 110" className="w-full max-w-xl" role="img" aria-label={`${c.label} trend; values listed below`}><polyline fill="none" stroke="#42c8b0" strokeWidth="2" points={c.evidence.map((p,i)=>`${10+i*480/Math.max(1,c.evidence.length-1)},${105-p.score}`).join(' ')}/></svg>
           {c.evidence.map((p)=><div key={p.sessionId}><button className="underline" onClick={()=>setReview(data.sessions.find((s)=>s.summary.sessionId===p.sessionId)??null)}>{p.sessionId}: {p.score.toFixed(1)} at {p.date}</button></div>)}

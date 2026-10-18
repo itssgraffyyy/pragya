@@ -81,7 +81,7 @@ export async function reconcileLearningSession(storage:StorageAdapter,session:St
         const prior=practice?.sessionId?await storage.getSession(practice.sessionId):undefined;
         const comparable=!!prior&&cohortKey(prior)===cohortKey(session)&&(rec.cohortKey===null||rec.cohortKey===cohortKey(session));
         rec.status=score!==null&&score!==undefined&&score>=80&&comparable&&practice?.seed!==exercise.seed?'resolved':'continued';
-        if(rec.status==='resolved')profile.curriculumPosition+=1;
+        if(rec.status==='resolved'&&!(profile.completedRecommendationIds??[]).includes(rec.id)){profile.curriculumPosition+=1;profile.completedRecommendationIds=[...(profile.completedRecommendationIds??[]),rec.id];}
       }
       if(exercise.status==='completed'){profile.lastCompletedAdaptiveExercise=exercise.id;await storage.saveTrainee(profile);}
       await storage.saveLearningPlan(plan);

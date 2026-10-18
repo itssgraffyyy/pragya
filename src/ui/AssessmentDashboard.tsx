@@ -43,7 +43,7 @@ export function AssessmentDashboard({ session, historySessions }: { session: Sto
   }
   return <section className="panel p-4 my-4 space-y-4" data-testid="assessment-dashboard">
     <h3 className="font-semibold text-xl">Decision assessment</h3>
-    <p>{preview ? 'Policy preview' : 'Recorded assessment'}: {result.policyId}@{result.policyVersion}</p>
+    <p>{preview ? 'Policy preview' : session.assessment ? 'Recorded assessment' : 'Legacy recalculation (excluded from Skill DNA)'}: {result.policyId}@{result.policyVersion}</p>
     <p className="text-2xl" data-testid="assessment-overall">Overall: {result.overall.toFixed(1)} / 100</p>
     <div className="grid grid-cols-2 gap-2">
       {Object.entries(result.categories).map(([name, value]) => <div key={name}>{name}: {name === 'confidenceCalibration' ? `${(value * 100).toFixed(1)}% (separate metric)` : `${value.toFixed(1)} / 100`}</div>)}

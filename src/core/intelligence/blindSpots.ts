@@ -49,7 +49,7 @@ export function detectBlindSpots(results: AssessmentResult[], options: { minimum
 
   // 2. Underconfidence: low-confidence correct classifications.
   {
-    const hits = c.filter((x) => x.outcome === 'correct' && x.confidence === 'low');
+    const hits = c.filter((x) => x.outcome === 'correct' && x.confidence === 'low' && x.evidence >= 0.75 && x.missing.length === 0);
     push({
       patternId: 'underconfidence',
       patternName: 'Underconfidence',
@@ -155,16 +155,17 @@ export function detectBlindSpots(results: AssessmentResult[], options: { minimum
 
   // 7. Information inconsistency: same submitted label with contradictory outcomes.
   {
-    const byLabel = new Map<string, { correct: number; total: number; observations: FlatContact[] }>();
+    const byLabel = new Map<string, { correct: number; total: number; observations: FlatContact[]; labels: Set<string> }>();
     for (const x of c) {
-      if (!x.submitted || !x.context) continue;
-      const e = byLabel.get(x.submitted + ':' + x.context) ?? { correct: 0, total: 0, observations: [] };
+      if (!x.submitted || !x.context || !['correct','incorrect'].includes(x.outcome)) continue;
+      const key=JSON.stringify([x.context,[...x.supportingEvidence].sort()]);
+      const e = byLabel.get(key) ?? { correct: 0, total: 0, observations: [], labels: new Set<string>() };
       e.total += 1;
-      e.observations.push(x);
+      e.observations.push(x); e.labels.add(x.submitted);
       if (x.outcome === 'correct') e.correct += 1;
-      byLabel.set(x.submitted + ':' + x.context, e);
+      byLabel.set(key, e);
     }
-    const mixed = [...byLabel.entries()].filter(([, e]) => e.total >= 2 && e.correct > 0 && e.correct < e.total);
+    const mixed = [...byLabel.entries()].filter(([, e]) => e.total >= 3 && e.labels.size > 1 && e.correct > 0 && e.correct < e.total);
     push({
       patternId: 'informationInconsistency',
       patternName: 'Information Inconsistency',
@@ -173,9 +174,9 @@ export function detectBlindSpots(results: AssessmentResult[], options: { minimum
       observations: mixed.flatMap(([, e]) => e.observations.map((h) => ({ sessionId: h.sessionId, contactId: h.contactId }))),
       sessionIds: knownSessions(c),
       reliability: mixed.length > 0 ? 0.5 : 0,
-      evidence: mixed.slice(0, 5).map(([label, e]) => `"${label}": ${e.correct}/${e.total} correct`),
+      evidence: mixed.slice(0, 5).map(([, e]) => `Labels ${[...e.labels].join(", ")}: ${e.correct}/${e.total} correct with matching recorded context/evidence`),
       explanation: mixed.length > 0
-        ? 'Contradictory interpretations of similar observations without documented justification.'
+        ? 'Classifications differ in matching recorded observation contexts; compare the supporting evidence.'
         : 'No contradictory use of similar observations.',
       recommendedObjective: 'category-discrimination',
     });

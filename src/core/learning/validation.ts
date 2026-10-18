@@ -1,4 +1,4 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 import { scenarioDefinitionSchema, confidenceLevelSchema, evidenceItemSchema, contactCategorySchema, proceduralResponseSchema } from '../scenario/schema';
 import { scoringPolicySchema } from '../scoring/policy';
 import type { StoredSession } from '../persistence/storage';
@@ -36,6 +36,8 @@ export const storedSessionSchema = z.object({
   if (a && s.scoringPolicy && (a.policyId !== s.scoringPolicy.policyId || a.policyVersion !== s.scoringPolicy.policyVersion)) ctx.addIssue({ code: 'custom', message: 'Policy snapshot does not match assessment' });
   if (s.summary.scenarioId !== s.summary.scenarioSnapshot.id || s.summary.scenarioVersion !== s.summary.scenarioSnapshot.version) ctx.addIssue({ code: 'custom', message: 'Scenario snapshot does not match session' });
   if (s.events.events.some((e) => e.sessionId !== s.summary.sessionId || e.traineeId !== s.summary.traineeId)) ctx.addIssue({ code: 'custom', message: 'Foreign event in session' });
+  const ids=new Set(s.summary.scenarioSnapshot.contacts.map((c)=>c.id));
+  if(a?.contacts.some((c)=>!ids.has(c.contactId)))ctx.addIssue({code:'custom',message:'Unknown contact in assessment'});
   if (a && new Set(a.contacts.map((c) => c.contactId)).size !== a.contacts.length) ctx.addIssue({ code: 'custom', message: 'Duplicate contact score' });
 });
 export function validSession(value: unknown): value is StoredSession { return storedSessionSchema.safeParse(value).success; }

@@ -48,7 +48,7 @@ export function recommendLearning(profile:TraineeProfile,dna:SkillDNA,patterns:P
     }
     if(!result.some((r)=>!['resolved','dismissed'].includes(r.status)))add('uncertainty','unknown-classification','Comparable coverage is insufficient to establish a development area. Broaden assessment coverage.',measured.map((s)=>s.summary.sessionId),55,null);
   }
-  return result.sort((a,b)=>b.priority-a.priority||a.id.localeCompare(b.id));
+  return result.sort((a,b)=>Number(b.status==='awaitingEvaluation')-Number(a.status==='awaitingEvaluation')||b.priority-a.priority||a.id.localeCompare(b.id));
 }
 export async function recomputeRecommendations(storage:StorageAdapter,profile:TraineeProfile,now:string):Promise<LearningPlan> {
   const history=await traineeHistory(storage,profile);const dna=calculateSkillDNA(profile,history.sessions);const patterns=longitudinalPatterns(profile,history.sessions);

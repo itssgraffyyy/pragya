@@ -33,7 +33,7 @@ export const MIN_OBSERVATIONS = 3;
 export interface FlatContact {
   sessionId: string;
   allowsUnknown: boolean;
-  context: string | undefined;
+  context: string | undefined; supportingEvidence: string[];
   detection: number;
   contactId: string;
   outcome: string;
@@ -55,7 +55,7 @@ export function flatten(results: AssessmentResult[]): FlatContact[] {
     }).map((c) => ({
       sessionId: r.sessionId,
       allowsUnknown: c.allowsUnknown === true,
-      context: c.observationContext,
+      context: c.observationContext ? JSON.stringify([r.policyId,r.policyVersion,c.observationContext]) : undefined, supportingEvidence: c.supportingEvidence,
       detection: c.detection,
       contactId: c.contactId,
       outcome: c.classificationOutcome,

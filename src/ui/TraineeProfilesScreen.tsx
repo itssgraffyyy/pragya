@@ -20,7 +20,7 @@ export function TraineeProfilesScreen() {
   const [legacyId, setLegacyId] = useState('');
   const [busy, setBusy] = useState(false);
   const selected = profiles.find((p) => p.id === traineeId);
-  async function refresh() { const storage = await initStorage(); setProfiles(await storage.listTrainees()); }
+  async function refresh() { const storage = await initStorage(); const rows=await storage.listTrainees();const valid=rows.flatMap((p)=>{const parsed=traineeProfileSchema.safeParse(p);return parsed.success?[parsed.data]:[];});setProfiles(valid);if(valid.length!==rows.length)setError('A corrupt profile was excluded. Original stored data was retained.'); }
   async function run(fn: () => Promise<void>) { setError(''); setBusy(true); try { await fn(); await refresh(); } catch(e) { setError(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); } }
   useEffect(() => { void refresh().catch((e: Error) => setError(e.message)); }, []);
   useEffect(() => { setSessions([]); setReview(null); if (!selected) return; let active = true;

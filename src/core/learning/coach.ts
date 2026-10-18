@@ -1,4 +1,4 @@
-﻿import type { StoredSession } from '../persistence/storage';
+import type { StoredSession } from '../persistence/storage';
 import type { TraineeProfile } from './profile';
 import type { LearningPlan } from './plan';
 import { calculateSkillDNA, measuredSessions } from './skillDNA';
@@ -12,7 +12,7 @@ export function coachAnswer(profile:TraineeProfile,sessions:StoredSession[],plan
   const answer:CoachAnswer={question,paragraphs:[],references:[],objectives:[],recommendationId:null};
   const cite=(ids:string[])=>{for(const id of new Set(ids)){const s=eligible.find((s)=>s.summary.sessionId===id);if(s&&!answer.references.some((r)=>r.sessionId===id))answer.references.push({sessionId:id,contactIds:s.assessment!.contacts.filter((c)=>c.assessable).map((c)=>c.contactId)});}};
   if(question==='next'||question==='recommendation') {
-    const rec=plan?.recommendations.filter((r)=>r.traineeId===profile.id&&!['dismissed','resolved'].includes(r.status)).sort((a,b)=>b.priority-a.priority)[0];
+    const rec=plan?.recommendations.filter((r)=>r.traineeId===profile.id&&!['dismissed','resolved'].includes(r.status)).sort((a,b)=>Number(b.status==='awaitingEvaluation')-Number(a.status==='awaitingEvaluation')||b.priority-a.priority)[0];
     if(rec){answer.paragraphs.push(rec.reason,`Objective: ${rec.expectedBehavior}. Difficulty: ${rec.difficulty}.`);answer.objectives.push(rec.objective);answer.recommendationId=rec.id;cite(rec.evidenceSessionIds);}
     else answer.paragraphs.push('No supported recommendation is stored yet. Open adaptive training to establish a baseline or refresh your learning plan.');
     return answer;

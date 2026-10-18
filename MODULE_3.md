@@ -52,4 +52,44 @@ Learning writes are serialized per trainee to prevent delayed UI loads or simult
 
 The production build emits a small service worker that caches only this application's shell/assets. A first successful local/secure-origin load is needed before disconnected reloads; no remote API or inference is required. Direct file-protocol installation is not supplied. Browser offline validation is part of the final test checkpoint.
 
-UI integration checks so far: production bundle and TypeScript passed; 12 profile/adaptive/post-session integration tests passed. Component/browser verification continues in the final validation checkpoint.
+UI checkpoint validation passed: production bundle, TypeScript, 12 profile/adaptive/post-session integration tests and seven adaptive/component checks. Final expanded validation is recorded below.
+## Read-only integration contract
+
+`getLearningSnapshot(storage, traineeId, asOf)` returns `TraineeLearningSnapshot` with `contractVersion: 1`, the requested trainee ID, timestamp, Skill DNA cohorts, progress history, pattern evidence, recommendation statuses, exercise completions, coverage and original session assessments. `nonSensitiveMetrics` contains completed/measured session counts, completed exercise count and unassessed-competency count. It omits display names and reference codes. Future consumers should call this API rather than recomputing scores or merging incompatible cohorts. No Module 4 commander dashboard, multiplayer or unit-wide analytics is implemented.
+
+## Validation scope and known limitations
+
+The final browser configuration serves the production bundle on port 5174, including its actual offline shell; run the production build before browser tests. The five Module 3 journeys use real profile import, generator, engine, scoring and IndexedDB services. Initial history fixtures are produced by the real simulation/scoring engine, and primary journeys complete actual exercises through the UI. They do not mock assessment/recommendation responses.
+
+The initial aggregation, recommendation and coach rules are transparent heuristics, not trained models or validated operational readiness measures. Cohort comparisons group broad synthetic conditions and still span different scenes/seeds; they are learning indicators, not controlled causal proof. Practice success alone is not transfer. Follow-up assessments do not advance the same curriculum objective twice.
+
+Exact ambiguity, evidence requirements and sensor intensity cannot be directly overridden through Module 1 GeneratorConfig. The adapter reports this limitation and uses existing generator behavior. No native desktop installer is added. Disconnected reload requires a first successful production-shell installation on a local/secure HTTP origin with service-worker support. Profile file imports are limited to 20 MB in the UI. The pre-existing large JavaScript bundle advisory remains; no additional runtime dependencies were introduced.
+
+Corrupted profile/session records are excluded with warnings and preserved in storage. Imported plan references and exercise seed/configuration consistency are checked before atomic writes. Existing assessment scores are never silently recalculated. Awaiting unseen evaluations take precedence over unrelated recommendations.
+## Final validation and completion
+
+- `npm run build`: passed, including strict TypeScript and the production offline shell.
+- `npm test -- --maxWorkers=2 --minWorkers=1`: 155 passed, 0 failed, 0 skipped across 24 files. Worker limits reduce test-run memory; no test is excluded.
+- `npm run test:e2e`: 8 passed, 0 failed, 0 skipped. All five Module 3 journeys and all three existing Module 1 browser journeys passed without retry in the final run.
+- Offline verification: the production shell was installed, browser networking disabled, the application reloaded, saved Skill DNA opened and a real personalized exercise generated from local history.
+- Browser tests use the bundled Chromium headless shell with software ANGLE/SwiftShader rendering and the app's low graphics preset. UI assertion/action timeouts are unchanged. This avoids host-specific cold-launch/compositor failures seen during baseline and alternative-browser checks.
+- Offline regression: manifest-owned static asset cache lookup handles preview-server `Vary: Origin` differences between precache and module requests. Primary launch assertions wait for the actual ready screen before inspecting committed exercise state.
+- Legacy review-time recalculations are explicitly labeled and excluded from Skill DNA. All-unobservable sessions are not counted as measured history. Competency views list highest/lowest measured scores and declining comparable measurements with sufficiency indicators.
+
+All twenty Module 3 definition-of-done conditions are implemented and verified within the documented rule-based training scope. No required feature is left incomplete. Unsupported generator controls, first-load offline installation, archive-size limits and unvalidated heuristic interpretation remain explicit limitations, not fabricated capabilities. Modules 1 and 2 remain functional. Module 4 itself has not been started; only its requested typed reuse contract is prepared.
+
+## Tested Git checkpoints
+
+| Milestone | Commit |
+| --- | --- |
+| Trainee profiles and assessment history | 9846b5c |
+| Skill DNA and visualizations | 13a9a75 |
+| Longitudinal blind spots | 8a4c190 |
+| Personalized recommendations | 38e3505 |
+| Closed-loop adaptive generation | 5a79432 |
+| Progress and refresher planning | 5e1fd4d |
+| Offline coach | 9c33095 |
+| Integrated learning UI/offline shell | 4feb274 |
+| Final regression validation | See final `test: validate Module 3 learning workflows and regressions` commit in git log |
+
+Each milestone was pushed to origin/main after relevant validation. Existing diagnostic files were retained and excluded from implementation commits.
