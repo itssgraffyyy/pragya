@@ -41,3 +41,6 @@ Terminal simulation capture saves Module 2 results, updates the correct profile 
 ## Progress and refresher planning
 
 Progress exposes baseline/latest measurements separately by compatible cohort, source session IDs, corrective practice, unseen evaluation and follow-up stages. Incompatible comparisons have null deltas and an explicit explanation. Refresher intervals are configurable per trainee (default 30 days); a reminder requires an assigned objective or recorded past difficulty, not elapsed time alone. These are internal foundation/developing/consistent/advanced/refresher training milestones, never operational certifications. Explicit as-of dates make retention calculations reproducible and exclude future observations.
+## Offline coach
+
+The coach is a deterministic template/rules service, not an LLM. Eight contextual questions explain saved scores and rule references, missing evidence, calibration, strengths, recurring mistakes, progress and next exercises. Responses cite only the selected trainee's valid completed assessments, disclose insufficient evidence and never invent sensor observations. The UI can open each supporting Module 2 assessment.

@@ -1,3 +1,4 @@
+import { CoachScreen } from './ui/CoachScreen';
 import { ProgressScreen } from './ui/ProgressScreen';
 import { AdaptiveTrainingScreen } from './ui/AdaptiveTrainingScreen';
 import { LearningScreen } from './ui/LearningScreen';
@@ -79,6 +80,7 @@ export default function App() {
       {screen === 'learning' && <LearningScreen />}
       {screen === 'adaptive' && <AdaptiveTrainingScreen />}
       {screen === 'progress' && <ProgressScreen />}
+      {screen === 'coach' && <CoachScreen />}
     </div>
   );
 }
