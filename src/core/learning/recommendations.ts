@@ -1,3 +1,4 @@
+import { learningProgress, addRefresherRecommendations } from './progress';
 import type { TraineeProfile } from './profile';
 import type { SkillDNA, CompetencyId } from './skillDNA';
 import { measuredSessions, stableKey } from './skillDNA';
@@ -51,6 +52,6 @@ export function recommendLearning(profile:TraineeProfile,dna:SkillDNA,patterns:P
 export async function refreshRecommendations(storage:StorageAdapter,profile:TraineeProfile,now:string):Promise<LearningPlan> {
   const history=await traineeHistory(storage,profile);const dna=calculateSkillDNA(profile,history.sessions);const patterns=longitudinalPatterns(profile,history.sessions);
   const raw=await storage.getLearningPlan(profile.id); const old=raw?learningPlanSchema.parse(raw):null;
-  const plan:LearningPlan={schemaVersion:1,traineeId:profile.id,updatedAt:now,recommendations:recommendLearning(profile,dna,patterns,history.sessions,old?.recommendations??[],now),exercises:old?.exercises??[],patterns};
-  await storage.saveLearningPlan(plan); return plan;
+  let plan:LearningPlan={schemaVersion:1,traineeId:profile.id,updatedAt:now,recommendations:recommendLearning(profile,dna,patterns,history.sessions,old?.recommendations??[],now),exercises:old?.exercises??[],patterns};
+  plan=addRefresherRecommendations(profile,plan,learningProgress(profile,history.sessions,plan,now),now); await storage.saveLearningPlan(plan); return plan;
 }

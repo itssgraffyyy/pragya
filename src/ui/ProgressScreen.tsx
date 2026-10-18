@@ -1,0 +1,19 @@
+﻿import { useEffect, useMemo, useState } from 'react';
+import { useTraineeLearning } from './useTraineeLearning';
+import { useUiStore } from '../store/uiStore';
+import { initStorage } from '../core/persistence/appStorage';
+import { learningPlanSchema, type LearningPlan } from '../core/learning/plan';
+import { learningProgress, saveRefresherInterval } from '../core/learning/progress';
+export function ProgressScreen(){
+  const data=useTraineeLearning();const [plan,setPlan]=useState<LearningPlan|null>(null);const [days,setDays]=useState(30);const [error,setError]=useState('');const [asOf]=useState(()=>new Date().toISOString());
+  useEffect(()=>{let active=true;setPlan(null);if(!data.profile)return;setDays(data.profile.refresherDays??30);void initStorage().then((s)=>s.getLearningPlan(data.profile!.id)).then((p)=>{if(active)setPlan(p?learningPlanSchema.parse(p):null);}).catch((e:Error)=>{if(active)setError(e.message);});return()=>{active=false;};},[data.profile]);
+  const progress=useMemo(()=>data.profile?learningProgress(data.profile,data.sessions,plan,asOf):null,[data.profile,data.sessions,plan,asOf]);
+  return <main className="p-6 max-w-5xl mx-auto space-y-4"><header className="flex justify-between"><h2 className="text-2xl">Learning progress</h2><button onClick={()=>useUiStore.getState().navigate('home')}>Home</button></header>{(error||data.error)&&<p role="alert">{error||data.error}</p>}
+    {data.loading?<p role="status">Loading progress...</p>:!progress?<p>Create or select a trainee profile first.</p>:<><p>Profile: {data.profile!.displayName}. Progression: <strong>{progress.progression}</strong> (internal training milestone).</p><p>{progress.completedCorrectiveExercises} corrective exercises completed.</p>
+      <section className="panel p-4"><h3>Baseline and current competency measurements</h3>{progress.competencies.filter((c)=>c.current!==null).map((c)=><p key={c.cohortKey+c.competency}>{c.competency}: baseline {c.baseline?.toFixed(1)}, latest {c.current?.toFixed(1)}, change {c.change===null?'insufficient comparable observations':`${c.change>0?'+':''}${c.change.toFixed(1)} points`}; {c.state}. Evidence: {c.sessionIds.join(', ')}.</p>)}{!progress.competencies.length&&<p>No completed assessment evidence yet.</p>}</section>
+      <section className="panel p-4"><h3>Corrective practice, unseen evaluation and follow-up</h3>{progress.comparisons.length===0&&<p>No completed adaptive exercises yet.</p>}{progress.comparisons.map((c)=><p key={c.exerciseId}>{c.stage}: {c.competency}; before {c.baseline?.toFixed(1)??'unmeasured'}, after {c.current?.toFixed(1)??'unmeasured'}, change {c.delta===null?'not comparable':c.delta.toFixed(1)+' points'}. {c.explanation} Evidence: {c.sessionIds.join(', ')}.</p>)}</section>
+      <section className="panel p-4"><h3>Refresher planning</h3><label>Refresher interval in days <input aria-label="Refresher interval in days" className="bg-console-bg border p-1" type="number" min="1" max="3650" value={days} onChange={(e)=>setDays(Number(e.target.value))}/></label><button className="border p-2" onClick={()=>void initStorage().then((s)=>saveRefresherInterval(s,data.profile!,days)).then(data.refresh).catch((e:Error)=>setError(e.message))}>Save refresher interval</button><p>Time since practice schedules review; it does not prove skill decay.</p>{progress.refreshers.map((f)=><p key={f.competency}>{f.competency}: due {f.dueAt}. {f.reason} Evidence: {f.sessionIds.join(', ')}.</p>)}{!progress.refreshers.length&&<p>No evidence-based refresher is currently due.</p>}</section>
+      <p>Remaining development areas: {progress.remainingDevelopmentAreas.join(', ')||'none established'}.</p><p>Unassessed: {progress.unassessed.join(', ')||'none'}.</p><button className="border p-2" onClick={()=>useUiStore.getState().navigate('adaptive')}>View recommended training</button>
+    </>}
+  </main>;
+}

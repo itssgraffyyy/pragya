@@ -6,7 +6,7 @@ export const traineeProfileSchema = z.object({
   schemaVersion: z.literal(1), id: z.string().min(1).max(120), displayName: z.string().trim().min(1).max(100),
   referenceCode: z.string().max(80).default(''), createdAt: z.string().datetime(), lastActiveAt: z.string().datetime(),
   experience: z.enum(['foundation', 'developing', 'experienced']), objectiveIds: z.array(objectiveIdSchema).max(30),
-  archived: z.boolean(), legacySessionIds: z.array(z.string().min(1)).max(10000),
+  refresherDays: z.number().int().min(1).max(3650).default(30), archived: z.boolean(), legacySessionIds: z.array(z.string().min(1)).max(10000),
   completedSessionIds: z.array(z.string().min(1)).max(10000), curriculumPosition: z.number().int().nonnegative(),
   lastCompletedAdaptiveExercise: z.string().nullable(),
 }).strict();
