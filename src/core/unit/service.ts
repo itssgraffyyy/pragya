@@ -43,7 +43,7 @@ export async function manageUnit<K extends 'units'|'memberships'|'instructors'|'
   await authorize(storage,actor,unitId,'manageUnit');
   if(kind==='memberships') {
     const member=data as TrainingRecords['memberships'];
-    if(!(await records(storage,'users')).some(u=>u.id===member.userId&&!u.archived))throw new Error('Active user required');
+    const identity=(await records(storage,'users')).find(u=>u.id===member.userId&&!u.archived);if(!identity)throw new Error('Active user required');if(member.role==='trainee'&&!identity.traineeId)throw new Error('Trainee membership requires a linked profile');
     const other=(await records(storage,'memberships')).find(m=>m.id!==member.id&&!m.archived&&!member.archived&&m.userId===member.userId&&m.unitId===member.unitId&&m.role===member.role);
     if(other)throw new Error('Membership already exists');
     const current=(await records(storage,'memberships')).find(m=>m.id===member.id);

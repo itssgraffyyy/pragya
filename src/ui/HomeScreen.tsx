@@ -8,6 +8,7 @@ import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
 export function HomeScreen() {
   const navigate = useUiStore((s) => s.navigate);
   const cards: { title: string; subtitle: string; action: () => void }[] = [
+    { title: 'Unit Intelligence', subtitle: 'Evidence-based competency heatmaps and training coverage', action: () => navigate('analytics') },
     { title: 'Instructor & Assignments', subtitle: 'Scenario control, policy versions, assigned exercises and reviews', action: () => navigate('instructor') },
     { title: 'Duo Crew Mode', subtitle: 'One shared scenario, structured communication and crew review', action: () => navigate('crew') },
     { title: 'Units & Identities', subtitle: 'Local demo roles, membership and instructor scope', action: () => navigate('units') },
