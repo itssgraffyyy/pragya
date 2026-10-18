@@ -8,6 +8,7 @@ import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
 export function HomeScreen() {
   const navigate = useUiStore((s) => s.navigate);
   const cards: { title: string; subtitle: string; action: () => void }[] = [
+    { title: 'Skill DNA', subtitle: 'Evidence, competencies and comparable trends', action: () => navigate('learning') },
     { title: 'Trainee Profiles', subtitle: 'Local profiles and individual assessment history', action: () => navigate('trainees') },
     {
       title: 'Scenario Selection',

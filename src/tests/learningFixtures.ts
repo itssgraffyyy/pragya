@@ -1,4 +1,4 @@
-﻿import { SimulationEngine } from '../core/sim/engine';
+import { SimulationEngine } from '../core/sim/engine';
 import { buildSessionExport } from '../core/sim/sessionSummary';
 import { SCENARIO_SINGLE_RECOGNITION } from '../core/scenario/bundled/scenariosA';
 
@@ -8,7 +8,7 @@ export function learningSession(id = 's1', traineeId = 't1', score: 'correct' | 
   engine.acknowledgeContact('c1'); engine.setClassification('c1', score === 'correct' ? 'smallMultirotor' : 'birdLike'); engine.setConfidence('c1','high');
   if (score === 'correct') engine.toggleEvidence('c1','rotorSilhouette',true);
   engine.setProceduralResponse('c1', score === 'correct' ? 'recordAndReport' : 'escalateSupervisor'); engine.submitAssessment('c1');
-  const session = buildSessionExport(engine);
+  const session = structuredClone(buildSessionExport(engine));
   session.summary.startedAt = `2026-10-${String(day).padStart(2,'0')}T00:00:00.000Z`;
   session.summary.endedAt = `2026-10-${String(day).padStart(2,'0')}T00:01:00.000Z`;
   session.assessment!.calculatedAt = session.summary.endedAt;

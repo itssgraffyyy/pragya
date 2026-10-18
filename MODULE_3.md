@@ -1,4 +1,4 @@
-﻿# Module 3: Personalized learning
+# Module 3: Personalized learning
 
 ## Architecture and baseline
 
@@ -13,3 +13,13 @@ IndexedDB version 2 adds a trainees store and preserves all version-1 stores and
 Legacy records require explicit association by session ID. Their original owner and assessment remain unchanged. Sessions without saved assessments are shown as unmeasured, not silently recalculated. Corrupt records are excluded with a warning. Profile imports validate every record and ownership before a single atomic IndexedDB transaction. Import cannot overwrite a local profile or conflicting session. Deleting a profile requires UI confirmation and retains its sessions; archiving preserves profile and history.
 
 Skill assessment history is derived from immutable session snapshots, rather than copying scores into profile fields. Total completed sessions is derived from individual history; completed session IDs are deduplicated in the profile.
+
+## Skill DNA formulas
+
+Ten configurable competency definitions map existing Module 2 contact scores to detection, classification, evidence, calibration, procedure, degraded conditions, multi-contact management, uncertainty, reporting completeness and score consistency. Missing measurements are null. Reporting measures four recorded submission fields; consistency measures 100 minus the population standard deviation of comparable classification scores, and does not imply accuracy.
+
+Each session contributes one mean per measured competency. Recency weights are `0.5 ** (ageDays / halfLifeDays)` with a default 30-day half-life and age measured relative to the latest assessment in the cohort, not the machine clock. The weighted mean is reproducible. Strength/development states require at least three sessions and three observations by default. Trend compares equal-sized early and late halves only when at least three assessment points exist.
+
+Cohorts separate full saved scoring-policy content, policy ID/version, environment, time of day, visibility, weather, difficulty, sensor conditions and single/multi-contact conditions. They are never pooled for trends. Accessible SVG bars and tables expose scores, coverage, evidence sufficiency and drill-down records. Filters never rewrite saved assessments.
+
+Baseline validation completed: build passed; 114/114 unit/component tests passed. Browser baseline: 2 passed, 1 failed before application interaction because Chromium launch exceeded 180 seconds; the first npm browser attempt also timed out starting Vite. These environment startup failures are recorded separately from regressions.
