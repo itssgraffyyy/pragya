@@ -44,3 +44,12 @@ Progress exposes baseline/latest measurements separately by compatible cohort, s
 ## Offline coach
 
 The coach is a deterministic template/rules service, not an LLM. Eight contextual questions explain saved scores and rule references, missing evidence, calibration, strengths, recurring mistakes, progress and next exercises. Responses cite only the selected trainee's valid completed assessments, disclose insufficient evidence and never invent sensor observations. The UI can open each supporting Module 2 assessment.
+## Learning UI and production offline shell
+
+The five learning screens share navigation and preserve selected-trainee boundaries. Post-session UI waits for persistence/learning updates, shows the next evidence-grounded step and can launch it directly. Profile/history/coach reviews can pass an explicitly scoped session set to the existing assessment dashboard. Unfinished assignments can be released without fabricating a result; completed evaluations can be followed by fresh-seed follow-ups.
+
+Learning writes are serialized per trainee to prevent delayed UI loads or simultaneous saves from overwriting newer plans. A read-only `getLearningSnapshot(storage, traineeId, asOf)` contract exposes versioned competency, progress, coverage, pattern, exercise, recommendation and assessment data without implementing Module 4 dashboards or unit analytics.
+
+The production build emits a small service worker that caches only this application's shell/assets. A first successful local/secure-origin load is needed before disconnected reloads; no remote API or inference is required. Direct file-protocol installation is not supplied. Browser offline validation is part of the final test checkpoint.
+
+UI integration checks so far: production bundle and TypeScript passed; 12 profile/adaptive/post-session integration tests passed. Component/browser verification continues in the final validation checkpoint.

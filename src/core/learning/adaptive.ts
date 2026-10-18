@@ -1,11 +1,12 @@
-﻿import type { StorageAdapter, StoredSession } from '../persistence/storage';
+import { serializeLearning } from './queue';
+import type { StorageAdapter, StoredSession } from '../persistence/storage';
 import type { TraineeProfile } from './profile';
 import { generateScenario } from '../generator/generator';
 import { recommendDifficulty } from '../difficulty/difficulty';
 import { deriveSeed } from '../rng';
 import { GENERATOR_VERSION } from '../types';
 import { calculateSkillDNA, cohortKey, measuredSessions } from './skillDNA';
-import { refreshRecommendations } from './recommendations';
+import { recomputeRecommendations } from './recommendations';
 import { traineeHistory } from './trainees';
 import { exerciseSchema, learningPlanSchema, recommendationSchema, type AdaptiveExercise, type LearningRecommendation } from './plan';
 
@@ -44,18 +45,14 @@ export function generateAdaptiveExercise(profile:TraineeProfile,recommendation:L
   }
   throw new Error(`Adaptive generator could not satisfy supported constraints: ${failure}`);
 }
-const queues=new Map<string,Promise<unknown>>();
-export function serializeLearning<T>(id:string,work:()=>Promise<T>):Promise<T>{
-  const previous=queues.get(id)??Promise.resolve();const result=previous.catch(()=>undefined).then(work);queues.set(id,result);
-  void result.finally(()=>{if(queues.get(id)===result)queues.delete(id);}).catch(()=>undefined);return result;
-}
 export async function prepareExercise(storage:StorageAdapter,traineeId:string,recommendationId:string,stage:AdaptiveExercise['stage'],now:string):Promise<AdaptiveExercise> {
   return serializeLearning(traineeId,async()=>{
     const profile=await storage.getTrainee(traineeId);if(!profile||profile.archived)throw new Error('Active trainee profile required');
     const raw=await storage.getLearningPlan(traineeId);if(!raw)throw new Error('Generate recommendations first');const plan=learningPlanSchema.parse(raw);
-    const rec=plan.recommendations.find((r)=>r.id===recommendationId);if(!rec||['resolved','dismissed'].includes(rec.status))throw new Error('Active recommendation required');
+    const rec=plan.recommendations.find((r)=>r.id===recommendationId);if(!rec||rec.status==='dismissed'||rec.status==='resolved'&&stage!=='followup')throw new Error('Active recommendation required');
     const active=plan.exercises.find((e)=>e.recommendationId===rec.id&&['prepared','running'].includes(e.status));if(active)return active;
     if(stage!=='practice'&&!plan.exercises.some((e)=>e.recommendationId===rec.id&&e.stage==='practice'&&e.status==='completed'))throw new Error('Complete practice before unseen evaluation');
+    if(stage==='followup'&&!plan.exercises.some((e)=>e.recommendationId===rec.id&&e.stage==='evaluation'&&e.status==='completed'))throw new Error('Complete unseen evaluation before follow-up');
     const history=await traineeHistory(storage,profile);const exercise=generateAdaptiveExercise(profile,rec,history.sessions,plan.exercises,stage,now);
     plan.exercises.push(exercise);rec.status='assigned';plan.updatedAt=now;await storage.saveLearningPlan(plan);return exercise;
   });
@@ -89,6 +86,9 @@ export async function reconcileLearningSession(storage:StorageAdapter,session:St
       if(exercise.status==='completed'){profile.lastCompletedAdaptiveExercise=exercise.id;await storage.saveTrainee(profile);}
       await storage.saveLearningPlan(plan);
     }
-    await refreshRecommendations(storage,profile,session.summary.endedAt);
+    await recomputeRecommendations(storage,profile,session.summary.endedAt);
   });
+}
+export async function abandonExercise(storage:StorageAdapter,traineeId:string,exerciseId:string):Promise<void>{
+  await serializeLearning(traineeId,async()=>{const raw=await storage.getLearningPlan(traineeId);if(!raw)throw new Error('Learning plan not found');const plan=learningPlanSchema.parse(raw);const e=plan.exercises.find((x)=>x.id===exerciseId);if(!e||!['prepared','running'].includes(e.status))throw new Error('Unfinished exercise required');e.status='aborted';const r=plan.recommendations.find((r)=>r.id===e.recommendationId);if(r)r.status='continued';await storage.saveLearningPlan(plan);});
 }

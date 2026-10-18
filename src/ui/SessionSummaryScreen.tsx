@@ -1,3 +1,4 @@
+import { PostSessionLearning } from './PostSessionLearning';
 import { AssessmentDashboard } from './AssessmentDashboard';
 /**
  * Session Summary — shown after completion/abort.
@@ -66,6 +67,7 @@ export function SessionSummaryScreen() {
       </div>
 
       {saveError && <p role="alert" className="text-console-danger">{saveError}</p>}
+      {lastExport && <PostSessionLearning session={lastExport} />}
       {lastExport && <AssessmentDashboard key={lastSummary.sessionId} session={lastExport} />}
 
       {/* Ground truth revealed post-session only */}

@@ -1,3 +1,4 @@
+import { serializeLearning } from './queue';
 import { learningProgress, addRefresherRecommendations } from './progress';
 import type { TraineeProfile } from './profile';
 import type { SkillDNA, CompetencyId } from './skillDNA';
@@ -49,9 +50,16 @@ export function recommendLearning(profile:TraineeProfile,dna:SkillDNA,patterns:P
   }
   return result.sort((a,b)=>b.priority-a.priority||a.id.localeCompare(b.id));
 }
-export async function refreshRecommendations(storage:StorageAdapter,profile:TraineeProfile,now:string):Promise<LearningPlan> {
+export async function recomputeRecommendations(storage:StorageAdapter,profile:TraineeProfile,now:string):Promise<LearningPlan> {
   const history=await traineeHistory(storage,profile);const dna=calculateSkillDNA(profile,history.sessions);const patterns=longitudinalPatterns(profile,history.sessions);
   const raw=await storage.getLearningPlan(profile.id); const old=raw?learningPlanSchema.parse(raw):null;
   let plan:LearningPlan={schemaVersion:1,traineeId:profile.id,updatedAt:now,recommendations:recommendLearning(profile,dna,patterns,history.sessions,old?.recommendations??[],now),exercises:old?.exercises??[],patterns};
   plan=addRefresherRecommendations(profile,plan,learningProgress(profile,history.sessions,plan,now),now); await storage.saveLearningPlan(plan); return plan;
+}
+
+export function refreshRecommendations(storage:StorageAdapter,profile:TraineeProfile,now:string):Promise<LearningPlan>{
+  return serializeLearning(profile.id,()=>recomputeRecommendations(storage,profile,now));
+}
+export function dismissRecommendation(storage:StorageAdapter,traineeId:string,id:string):Promise<LearningPlan>{
+  return serializeLearning(traineeId,async()=>{const raw=await storage.getLearningPlan(traineeId);if(!raw)throw new Error('Learning plan not found');const plan=learningPlanSchema.parse(raw);const rec=plan.recommendations.find((r)=>r.id===id);if(!rec)throw new Error('Recommendation not found');rec.status='dismissed';await storage.saveLearningPlan(plan);return plan;});
 }

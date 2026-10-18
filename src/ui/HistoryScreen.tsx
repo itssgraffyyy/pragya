@@ -1,3 +1,5 @@
+import { useSettingsStore } from '../store/settingsStore';
+import { traineeHistory } from '../core/learning/trainees';
 import { AssessmentDashboard } from './AssessmentDashboard';
 /**
  * Session History — lists locally saved sessions, allows re-export.
@@ -11,6 +13,7 @@ import { useUiStore } from '../store/uiStore';
 
 export function HistoryScreen() {
   const [review, setReview] = useState<StoredSession | null>(null);
+  const traineeId=useSettingsStore((s)=>s.traineeId);
   const navigate = useUiStore((s) => s.navigate);
   const [sessions, setSessions] = useState<StoredSession[]>([]);
   const [storage] = useState<StorageAdapter>(() => getStorage());
@@ -18,7 +21,7 @@ export function HistoryScreen() {
   useEffect(() => {
     let cancelled = false;
     storage
-      .listSessions()
+      .getTrainee(traineeId).then(async(profile)=>profile?(await traineeHistory(storage,profile)).sessions:storage.listSessions())
       .then((all) => {
         if (!cancelled) setSessions(all.sort((a, b) => b.summary.startedAt.localeCompare(a.summary.startedAt)));
       })
@@ -26,7 +29,7 @@ export function HistoryScreen() {
     return () => {
       cancelled = true;
     };
-  }, [storage]);
+  }, [storage,traineeId]);
 
   const reExport = (session: StoredSession) => {
     const blob = new Blob([JSON.stringify(session, null, 2)], { type: 'application/json' });
@@ -47,7 +50,7 @@ export function HistoryScreen() {
         </button>
       </div>
 
-      {review && <AssessmentDashboard key={review.summary.sessionId} session={review} />}
+      {review && <AssessmentDashboard key={review.summary.sessionId} session={review} historySessions={sessions} />}
       {sessions.length === 0 ? (
         <p className="text-console-muted" data-testid="history-empty">
           No saved sessions yet. Complete or abort an exercise to create one.

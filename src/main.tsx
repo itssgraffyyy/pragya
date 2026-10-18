@@ -11,3 +11,8 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 );
+
+// The packaged shell is cached after the first local installation/load.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => { void navigator.serviceWorker.register('./sw.js').catch((error:unknown) => console.warn('Offline shell could not be installed',error)); });
+}

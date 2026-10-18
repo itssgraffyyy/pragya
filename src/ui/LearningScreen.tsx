@@ -1,3 +1,4 @@
+import { LearningNav } from './LearningNav';
 import { longitudinalPatterns } from '../core/learning/longitudinal';
 import { useMemo, useState } from 'react';
 import { useUiStore } from '../store/uiStore';
@@ -21,7 +22,7 @@ export function LearningScreen() {
   const patterns=useMemo(()=>data.profile?longitudinalPatterns(data.profile,filtered):[],[data.profile,filtered]);
   const cohort=dna?.cohorts.find((c)=>c.key===cohortId)??dna?.cohorts[dna.cohorts.length-1];
   if(data.loading)return <p role="status" className="p-6">Loading learning history...</p>;
-  return <main className="p-6 max-w-6xl mx-auto space-y-4"><header className="flex justify-between"><h2 className="text-2xl">Skill DNA</h2><button onClick={()=>useUiStore.getState().navigate('home')}>Home</button></header>
+  return <main className="p-6 max-w-6xl mx-auto space-y-4"><header className="flex justify-between"><h2 className="text-2xl">Skill DNA</h2><button onClick={()=>useUiStore.getState().navigate('home')}>Home</button></header><LearningNav/>
     {data.error&&<p role="alert">{data.error}</p>}
     {!data.profile?<><p>Select or create a trainee profile to begin.</p><button className="border p-2" onClick={()=>useUiStore.getState().navigate('trainees')}>Manage trainee profiles</button></>:<>
       <p>Training profile: <strong>{data.profile.displayName}</strong>. These are simulator learning measures, not operational certification.</p>
@@ -38,7 +39,7 @@ export function LearningScreen() {
         <section className="panel p-4"><h3>Day/night, normal/degraded and contact-count coverage</h3><p>Separate cohorts retain policy and condition differences; their scores are not pooled.</p>{dna!.cohorts.map((c)=><p key={c.key}>{c.label}: {c.sessionIds.length} sessions, classification {c.competencies.find((x)=>x.id==='classification')?.score?.toFixed(1)??'unassessed'}.</p>)}</section>
       </>}
       <section className="panel p-4"><h3>Longitudinal blind-spot observations</h3>{patterns.length===0&&<p>Insufficient evidence for a pattern.</p>}{patterns.map((p)=><details key={p.cohortKey+p.patternId}><summary>{p.name}: {p.state}; {p.trend}</summary><p>{p.explanation}</p><p>First: {p.firstSession}; latest: {p.latestSession}; {p.applicableAssessments} applicable assessments. Objective: {p.objective}.</p><ul>{p.evidence.map((e)=><li key={e.sessionId+e.contactId}>{e.sessionId}/{e.contactId}</li>)}</ul></details>)}</section>
-      {review&&<AssessmentDashboard key={review.summary.sessionId} session={review}/>}
+      {review&&<AssessmentDashboard key={review.summary.sessionId} session={review} historySessions={data.sessions}/>}
     </>}
   </main>;
 }

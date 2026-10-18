@@ -1,9 +1,10 @@
+import { offlineShell } from './build/offlineShell';
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), offlineShell()],
   base: './', // relative paths so the built app runs offline from any location
   build: {
     target: 'es2021',

@@ -1,3 +1,5 @@
+import { serializeLearning } from './queue';
+import { stableKey } from './skillDNA';
 import { learningPlanSchema } from './plan';
 import { z } from 'zod';
 import type { StorageAdapter, StoredSession } from '../persistence/storage';
@@ -24,10 +26,12 @@ export async function associateLegacy(storage: StorageAdapter, profile: TraineeP
   await storage.saveTrainee(updated); return updated;
 }
 export async function recordProfileSession(storage: StorageAdapter, session: StoredSession): Promise<void> {
+  return serializeLearning(session.summary.traineeId, async()=>{
   const p = await storage.getTrainee(session.summary.traineeId);
   if (!p) return; // Legacy IDs are never silently assigned to the active profile.
   const completedSessionIds = session.summary.status === 'completed' ? [...new Set([...p.completedSessionIds, session.summary.sessionId])] : p.completedSessionIds;
   await storage.saveTrainee({ ...p, completedSessionIds, lastActiveAt: session.summary.endedAt });
+  });
 }
 export async function exportTrainee(storage: StorageAdapter, profile: TraineeProfile) {
   const history = await traineeHistory(storage, profile);
@@ -44,7 +48,7 @@ export async function importTrainee(storage: StorageAdapter, value: unknown): Pr
     if (s.summary.traineeId !== bundle.profile.id && !bundle.profile.legacySessionIds.includes(s.summary.sessionId)) throw new Error('Foreign trainee session in import');
     if (existingProfiles.some((p) => p.id === s.summary.traineeId || p.legacySessionIds.includes(s.summary.sessionId))) throw new Error('Session owned by another local profile');
     const existing = await storage.getSession(s.summary.sessionId);
-    if (existing && JSON.stringify(existing) !== JSON.stringify(s)) throw new Error('Conflicting session ID; original record preserved');
+    if (existing && stableKey(existing) !== stableKey(s)) throw new Error('Conflicting session ID; original record preserved');
   }
   await storage.saveTraineeBundle(bundle.profile, sessions, bundle.plan);
   return bundle.profile;

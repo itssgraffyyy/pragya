@@ -32,6 +32,8 @@ export interface SimulationStore {
   lastActionError: string | null;
   lastSummary: SessionSummaryRecord | null;
   lastExport: SessionExportEnvelope | null;
+  learningPending: boolean;
+  learningRevision: number;
 
   /** Load a scenario and prepare the session (idle -> ready). */
   loadScenario: (scenario: ScenarioDefinition, sessionId: string, traineeId: string) => void;
@@ -78,6 +80,8 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
   lastActionError: null,
   lastSummary: null,
   lastExport: null,
+  learningPending: false,
+  learningRevision: 0,
 
   loadScenario: (scenario, sessionId, traineeId) => {
     try {
@@ -249,8 +253,11 @@ function captureSession(engine: SimulationEngine, set: (partial: Partial<Simulat
   if (existing && existing.summary.endedAt === engine.endedAtIso) return existing;
   const envelope = buildSessionExport(engine);
   capturedSessions.set(engine, envelope);
-  void initStorage().then((storage) => storage.saveSession(envelope).then(() => recordProfileSession(storage, envelope)).then(() => reconcileLearningSession(storage, envelope))).catch((error: unknown) => {
-    set({ lastActionError: `Session could not be saved: ${error instanceof Error ? error.message : String(error)}` });
+  set({ learningPending: true });
+  void initStorage().then((storage) => storage.saveSession(envelope).then(() => recordProfileSession(storage, envelope)).then(() => reconcileLearningSession(storage, envelope))).then(() => {
+    set({ learningPending: false, learningRevision: useSimulationStore.getState().learningRevision + 1 });
+  }).catch((error: unknown) => {
+    set({ learningPending: false, lastActionError: `Session or learning update failed: ${error instanceof Error ? error.message : String(error)}` });
   });
   return envelope;
 }

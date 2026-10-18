@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { initStorage } from '../core/persistence/appStorage';
 import { traineeHistory } from '../core/learning/trainees';
 import { traineeProfileSchema, type TraineeProfile } from '../core/learning/profile';
@@ -19,5 +19,6 @@ export function useTraineeLearning() {
     return ()=>{active=false;};
   },[traineeId,revision]);
   const dna=useMemo(()=>profile?calculateSkillDNA(profile,sessions):null,[profile,sessions]);
-  return {profile,sessions,dna,loading,error,refresh:()=>setRevision((r)=>r+1)};
+  const belongs=!profile||profile.id===traineeId;
+  return {profile:belongs?profile:null,sessions:belongs?sessions:[],dna:belongs?dna:null,loading:loading||!belongs,error,refresh:()=>setRevision((r)=>r+1)};
 }

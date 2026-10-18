@@ -13,7 +13,7 @@ function download(name: string, body: string, type: string) {
   const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
 }
 
-export function AssessmentDashboard({ session }: { session: StoredSession }) {
+export function AssessmentDashboard({ session, historySessions }: { session: StoredSession; historySessions?: StoredSession[] }) {
   const [policy, setPolicy] = useState(session.scoringPolicy ?? POLICY_BASIC_RECOGNITION);
   const [draft, setDraft] = useState(JSON.stringify(policy, null, 2));
   const [error, setError] = useState('');
@@ -25,10 +25,11 @@ export function AssessmentDashboard({ session }: { session: StoredSession }) {
   const frames = useMemo(() => decisionReplay(scoringInputFor(session)), [session]);
   const frame = frames[frameIndex];
   useEffect(() => {
+    if(historySessions){setHistory(historySessions);return;}
     let active = true;
     getStorage().listSessions().then((all) => { if (active) setHistory(all); }).catch(() => { if (active) setHistoryError('Session history unavailable; showing this session only.'); });
     return () => { active = false; };
-  }, []);
+  }, [historySessions]);
   const findings = useMemo(() => detectBlindSpots([
     ...history.filter((s) => s.summary.traineeId === session.summary.traineeId && s.summary.sessionId !== session.summary.sessionId)
       .map((s) => s.assessment ?? assessStoredSession(s, s.scoringPolicy ?? POLICY_BASIC_RECOGNITION)), result,
