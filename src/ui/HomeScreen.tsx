@@ -9,6 +9,7 @@ import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
 export function HomeScreen() {
   const navigate = useUiStore((s) => s.navigate);
   const cards: { title: string; subtitle: string; action: () => void }[] = [
+    { title: 'Synthetic Demo', subtitle: 'Calculated sample histories, guided walkthrough and guarded reset', action: () => navigate('demo') },
     { title: 'Backups & Transfer', subtitle: 'Validated offline backup, recovery and portable training records', action: () => navigate('transfer') },
     { title: 'Unit Intelligence', subtitle: 'Evidence-based competency heatmaps and training coverage', action: () => navigate('analytics') },
     { title: 'Instructor & Assignments', subtitle: 'Scenario control, policy versions, assigned exercises and reviews', action: () => navigate('instructor') },

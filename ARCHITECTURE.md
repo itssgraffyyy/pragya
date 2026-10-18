@@ -1,4 +1,4 @@
-﻿# PRAGYA architecture
+# PRAGYA architecture
 
 ## Runtime and boundaries
 
@@ -30,15 +30,15 @@ flowchart LR
 
 | Area | Implementation and contract |
 |---|---|
-| Simulation | `core/sim/engine.ts`, `core/types.ts`; canonical event types; schema-1 scenarios; logVersion 1 |
-| Individual scoring | `core/scoring`; validated policy schema 1, policy ID/version and original saved result |
-| Profiles/learning | `core/learning`; profile/plan schema 1, evidence references, cohort-separated calculations and `getLearningSnapshot` contractVersion 1 |
-| Units/permissions | `core/unit`; validated users, units, memberships, instructor scope, cohorts, ownership, assignments and annotations |
-| Instructor | `core/instructor`; scenario publication, immutable policy versions, snapshot-bound assignments and attributed notes |
-| Crew | `core/crew`; schema-1 shared record, original engine/log, per-participant events, communication, individual/joint snapshots and separate coordination results |
-| Review | `core/aar`; actual event prefixes, same-policy/condition comparisons and separate crew annotations |
-| Analytics | `core/analytics/unitAnalytics.ts`; reportVersion 1; explicit ownership, threshold snapshots, scoped summaries and permitted raw drill-down |
-| Transfer | `core/transfer/backup.ts`; backupVersion 1, JSON-safe canonical SHA-256, typed references and conflict rejection |
+| Simulation | `src/core/sim/engine.ts`, `src/core/types.ts`; canonical event types; schema-1 scenarios; logVersion 1 |
+| Individual scoring | `src/core/scoring`; validated policy schema 1, policy ID/version and original saved result |
+| Profiles/learning | `src/core/learning`; profile/plan schema 1, evidence references, cohort-separated calculations and `getLearningSnapshot` contractVersion 1 |
+| Units/permissions | `src/core/unit`; validated users, units, memberships, instructor scope, cohorts, ownership, assignments and annotations |
+| Instructor | `src/core/instructor`; scenario publication, immutable policy versions, snapshot-bound assignments and attributed notes |
+| Crew | `src/core/crew`; schema-1 shared record, original engine/log, per-participant events, communication, individual/joint snapshots and separate coordination results |
+| Review | `src/core/aar`; actual event prefixes, same-policy/condition comparisons and separate crew annotations |
+| Analytics | `src/core/analytics/unitAnalytics.ts`; reportVersion 1; explicit ownership, threshold snapshots, scoped summaries and permitted raw drill-down |
+| Transfer | `src/core/transfer/backup.ts`; backupVersion 1, JSON-safe canonical SHA-256, typed references and conflict rejection |
 
 New individual results preserve the selected scoring policy. Instructor assignments capture their scenario/policy at assignment time. Changing a note or creating a new policy version never rewrites an earlier score. Standalone historical import does not assign a unit. A missing policy snapshot prevents equivalence claims.
 
@@ -67,3 +67,9 @@ This is a cooperative local identity workflow, not hostile-client authentication
 The build emits a versioned offline shell precaching every application chunk. Same-origin cache lookup handles the preview server's Origin-varying module responses. The console/crew renderer load lazily, reducing the initial entry; the shared 3D chunk remains substantial. No runtime CDN assets or paid inference service is needed. Tests exercise disconnected reload, generation, crew activity, instructor/unit workflows and cross-context backup recovery.
 
 See TEST_REPORT.md for measurements and limitations, and docs/OFFLINE_DEPLOYMENT.md for setup/recovery.
+
+## Synthetic demonstration lifecycle
+
+The lazy-loaded DemoScreen uses `src/core/demo` to assemble an isolated scratch dataset through the original engine, scorer, learning/assignment services and crew runtime. A versioned demo manifest records its unit and original identities. A validated backup appends the new graph atomically; duplicate install is rejected. An imported manifest must bring its own new unit/users/profiles and cannot designate preexisting records as demo data.
+
+Reset previews explicit keys/counts, refuses outside references, extra identities and additional authored unit scenarios, and checks available crew host leases. Both adapters compare all five relevant stores against the approved snapshot before deleting selected keys atomically. IndexedDB reads/comparisons/deletes occur in one readwrite transaction. Settings are excluded from deletion; UI selection falls back when a demo profile is removed. No database-wide clear is used. Scripts and arranged calendar metadata are explicitly synthetic; assessment values are calculated, with original source events preserved.

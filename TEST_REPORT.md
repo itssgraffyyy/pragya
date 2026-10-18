@@ -1,6 +1,8 @@
-﻿# PRAGYA verification report
+# PRAGYA verification report
 
 Verification date: 19 October 2026. Commands run in the existing local workspace, preserving prior diagnostic files and Modules 1–3. No tests are intentionally skipped.
+
+Latest verified delivery: **208 unit/component tests passed in 38 files; all 17 production browser tests passed in 2.2 minutes without retries, failures or skips; strict TypeScript and production build passed.** Earlier interrupted/flaky runs and the download hardening remain documented below. A warm clean run does not establish cold-start reliability across hardware.
 
 ## Regression checkpoint
 
@@ -45,3 +47,27 @@ Coordinated swarm dynamics, VR, closed-LAN transport, authenticated deployment, 
 Browser regression checkpoint: **16 passed in 3.6 minutes**, zero retries, failures or skips. The full-run 200-session browser sample measured validation 6,916 ms, restoration 776 ms and analytics navigation 484 ms; the database contained exactly 200 sessions. The parallel unit run stalled while initializing component environments after its core tests passed; it was interrupted and rerun with one worker. No test assertions or configuration were weakened.
 
 Final regression checkpoint: **203 unit/component tests passed in 37 files (73.12 seconds)** using one worker; **16 browser tests passed (3.6 minutes)**; strict production build passed. Zero skipped tests. The clean rerun had no failures or retries. The prior interrupted parallel run is disclosed above rather than counted as a pass. The isolated rerun aggregation median was 2,802.20 ms (3,638.55 / 2,802.20 / 2,712.66 ms), with a 196 MB Node worker RSS sample; timing varies with host load.
+
+## Final demo regression
+
+The final unit/component run passed **208 tests in 38 files (76.24 seconds)** with one worker. No failures or skips. Five demo integration checks cover real calculated correction/strength/unassessed histories, assignment and crew records, backup round-trip, genuine-data preservation, external-reference refusal, stale reset on both adapters and refusal to use an imported manifest to mark preexisting data as demo records.
+
+The targeted production browser demo test passed offline in 7.5 seconds (13.9 seconds total invocation). It reviews saved adaptive progress, crew AAR and unit heatmaps, refuses reset while a crew host lock is held, then deletes the synthetic dataset while retaining a genuine profile. The final complete browser run follows below.
+
+The final unit-run aggregation sample was 3,292.07 ms median over three trials (3,292.07 / 3,347.76 / 2,306.23 ms), Node worker RSS 173 MB, heap 37 MB before / 64 MB after. Samples fluctuate with host load and garbage collection; isolated and concurrent measurements above are retained rather than selecting only the fastest result.
+
+Final production build: **passed**, including strict `tsc --noEmit`. Main entry 462.72 KB (130.97 KB gzip); lazy demo 11.83 KB (4.69 KB gzip); lazy crew UI 17.20 KB (5.52 KB gzip); shared 3D chunk remains 836.59 KB (225.30 KB gzip) with the disclosed Vite size advisory. No dependencies were added for Module 4.
+
+Final browser run note: the original Module 3 onboarding test intermittently timed out clicking the resolved Start exercise button (15-second action timeout). Its existing first retry passed in 13.1 seconds. No selectors, assertions, timeouts or retry policy were weakened. Earlier complete 16-test regression was clean; the final run must retain this flaky classification. Cold-start/software-renderer responsiveness on this host remains a presentation/reliability limitation requiring qualification, rather than a hidden clean-pass claim.
+
+During demo test development, the external-reference fixture initially created an invalid foreign cohort; backup validation correctly rejected that graph. The fixture was corrected to add a legitimate cross-unit membership before the cohort, then verified that reset refuses a valid outside reference without changing records. An unused callback parameter caught by TypeScript was removed before the final build. The final 208-test run includes these corrected checks.
+
+Full demo-inclusive browser run before download hardening: **15 passed, 2 flaky, 0 failed or skipped (7.4 minutes)**. Onboarding and full-backup download each passed their existing first retry. The backup page reported success, but the download event exceeded the 15-second test deadline. Inspection found immediate object-URL revocation in the shared JSON helper; it now attaches the anchor and defers URL cleanup while the browser initiates the download. This removes a possible download race; it does not establish the sole cause of host timeouts. Browser verification is repeated after this source change; no test deadlines or assertions were loosened.
+
+That run's live canvas samples were 34.95 / 59.02 animation frames/s (individual / crew), p95 49.9 / 16.7 ms, pause UI response 69.87 ms and approximate Chromium JS heap 12 MB. The 200-session native IndexedDB sample measured validation 6,449 ms, restore 1,022 ms and analytics navigation 545 ms, with exactly 200 stored sessions. Software-renderer and sampling limitations remain unchanged.
+
+Post-download-hardening production build passed strict TypeScript and Vite. Shared JSON exports retain original data/filenames while delaying object-URL cleanup. The size advisory remains confined to the disclosed shared 3D chunk. No tests were skipped, disabled or relaxed.
+
+Post-download-hardening samples: individual/crew animation cadence **35.82 / 60.00 frames/s**, p95 intervals **33.4 / 16.8 ms**, pause response **352.68 ms**, approximate Chromium JS heap **14 MB** on each screen. Native 200-session backup validation **1,321 ms**, restore **263 ms**, analytics navigation **835 ms**, exact persisted count **200**. These remain software-renderer, short-window, host-dependent observations; prior slower samples remain disclosed above.
+
+Latest full production browser rerun after download hardening: **17 passed in 2.2 minutes; zero retries, failures or skips**. Original individual simulation, all learning journeys, role workflows, offline crew/assignments/analytics, backup transfer, host takeover, native storage/performance and synthetic demo reset all passed. Final unit/component checkpoint remains 208 passed across 38 files; strict build passed. Prior cold-start/download flakes are retained as qualification history; this clean warm run does not certify all cold hardware starts.

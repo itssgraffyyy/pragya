@@ -1,3 +1,4 @@
+import { localDataFingerprint,type LocalDeletion } from './localDeletion';
 import type { LocalDataBundle,LocalDataKind } from './storage';
 import type { TrainingKind, TrainingRecord } from '../unit/models';
 import type { LearningPlan } from '../learning/plan';
@@ -64,6 +65,21 @@ export class IndexedDbStorage implements StorageAdapter {
   async saveLocalBundle(b:LocalDataBundle,insertOnly:readonly LocalDataKind[]=[]):Promise<void>{
     if(!this.db)throw new Error('Storage not initialized');
     await new Promise<void>((resolve,reject)=>{const tx=this.db!.transaction([STORE_SCENARIOS,STORE_SESSIONS,STORE_SETTINGS,'trainees','learningPlans','training'],'readwrite');tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Local import aborted'));try{for(const x of b.scenarios)tx.objectStore(STORE_SCENARIOS)[insertOnly.includes('scenarios')?'add':'put'](x);for(const x of b.sessions)tx.objectStore(STORE_SESSIONS)[insertOnly.includes('sessions')?'add':'put'](x);for(const x of b.trainees)tx.objectStore('trainees')[insertOnly.includes('trainees')?'add':'put'](x);for(const x of b.plans)tx.objectStore('learningPlans')[insertOnly.includes('plans')?'add':'put'](x);for(const x of b.training)tx.objectStore('training')[insertOnly.includes('training')?'add':'put'](x);if(b.settings)tx.objectStore(STORE_SETTINGS).put(b.settings,SETTINGS_KEY);}catch(error){tx.abort();reject(error);}});
+  }
+  async deleteLocalRecords(expected:LocalDataBundle,remove:LocalDeletion):Promise<void>{
+    if(!this.db)throw new Error('Storage not initialized');
+    await new Promise<void>((resolve,reject)=>{
+      const names=['scenarios','sessions','trainees','learningPlans','training'];const tx=this.db!.transaction(names,'readwrite');let failure:unknown;let remaining=names.length;const values:Record<string,unknown[]>={};
+      tx.oncomplete=()=>resolve();tx.onerror=()=>reject(failure??tx.error);tx.onabort=()=>reject(failure??tx.error??new Error('Demo reset aborted'));
+      for(const name of names){const request=tx.objectStore(name).getAll();request.onsuccess=()=>{values[name]=request.result;if(--remaining)return;
+        try{
+          const current={scenarios:values.scenarios,sessions:values.sessions,trainees:values.trainees,plans:values.learningPlans,training:values.training} as LocalDataBundle;
+          if(localDataFingerprint(current)!==localDataFingerprint(expected))throw new Error('Local data changed; review the demo reset again. No records removed.');
+          for(const name of ['scenarios','sessions','trainees','plans'] as const)for(const id of remove[name])tx.objectStore(name==='plans'?'learningPlans':name).delete(id);
+          for(const key of remove.training)tx.objectStore('training').delete(key);
+        }catch(error){failure=error;tx.abort();}
+      };}
+    });
   }
   async listScenarios(): Promise<ScenarioDefinition[]> {
     return promisifyRequest(this.tx(STORE_SCENARIOS, 'readonly').getAll());

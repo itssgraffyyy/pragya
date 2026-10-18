@@ -1,4 +1,4 @@
-﻿# PRAGYA
+# PRAGYA
 
 Personalized Readiness & Adaptive Guidance for Aerial Threat Awareness is an offline-first desktop-browser training platform for synthetic contact recognition, evidence interpretation, uncertainty, communication and fictional instructor-approved response workflows.
 
@@ -21,6 +21,7 @@ Keep the same hostname, port and browser profile to access the same IndexedDB re
 - **Crew:** two profiles → one authoritative scenario/clock → separate individual commitments → structured evidence sharing and acknowledgments → confirmed joint report → individual and crew AAR. One local tab holds control; a saved paused prefix supports takeover.
 - **Instructor:** designated trainees/cohorts → original scenario editor and immutable policy versions → assignments → original outcomes, learning history and separately attributed feedback/follow-ups.
 - **Unit:** authorized summaries → condition/policy-separated heatmaps and coverage → cohort/period filters → supporting AAR with additional instructor scope → aggregate JSON/CSV.
+- **Synthetic demo:** Home → Synthetic Demo loads a separate labeled unit with calculated correction histories, assignments and crew AAR; previewed reset preserves genuine records. See DEMO_GUIDE.md.
 - **Recovery:** validated local backups and portable records → checksum/ownership/conflict checks → atomic restoration without clearing training records.
 
 Create local units, identities, memberships, cohorts and instructor scopes in **Units & Identities**. An instructor needs explicit trainee scope; commander summary permission does not by itself expose raw decisions or replay. Unrestricted local demo is local-owner tooling.
@@ -29,7 +30,7 @@ Create local units, identities, memberships, cohorts and instructor scopes in **
 
 ```sh
 npm run build
-npm test -- --maxWorkers=2 --minWorkers=1
+npm test -- --maxWorkers=1 --minWorkers=1
 npx playwright install chromium
 npm run test:e2e
 ```

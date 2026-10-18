@@ -1,3 +1,4 @@
+import { localDataFingerprint,type LocalDeletion } from './localDeletion';
 import type { LocalDataBundle,LocalDataKind } from './storage';
 import type { TrainingKind, TrainingRecord } from '../unit/models';
 import type { LearningPlan } from '../learning/plan';
@@ -26,6 +27,11 @@ export class MemoryStorage implements StorageAdapter {
   private settings: AppSettings = { ...DEFAULT_SETTINGS };
 
   async saveLocalBundle(input:LocalDataBundle,insertOnly:readonly LocalDataKind[]=[]):Promise<void>{const b=structuredClone(input);if(insertOnly.includes('scenarios')&&b.scenarios.some(x=>this.scenarios.has(x.id))||insertOnly.includes('sessions')&&b.sessions.some(x=>this.sessions.has(x.summary.sessionId))||insertOnly.includes('trainees')&&b.trainees.some(x=>this.trainees.has(x.id))||insertOnly.includes('plans')&&b.plans.some(x=>this.plans.has(x.traineeId))||insertOnly.includes('training')&&b.training.some(x=>this.training.has(x.kind+':'+x.id)))throw new Error('Import commit conflict; local records preserved');for(const x of b.scenarios)this.scenarios.set(x.id,x);for(const x of b.sessions)this.sessions.set(x.summary.sessionId,x);for(const x of b.trainees)this.trainees.set(x.id,x);for(const x of b.plans)this.plans.set(x.traineeId,x);for(const x of b.training)this.training.set(x.kind+':'+x.id,x);if(b.settings)this.settings=b.settings;}
+  async deleteLocalRecords(expected:LocalDataBundle,remove:LocalDeletion):Promise<void>{
+    const current={scenarios:[...this.scenarios.values()],sessions:[...this.sessions.values()],trainees:[...this.trainees.values()],plans:[...this.plans.values()],training:[...this.training.values()]};
+    if(localDataFingerprint(current)!==localDataFingerprint(expected))throw new Error('Local data changed; review the demo reset again. No records removed.');
+    for(const id of remove.scenarios)this.scenarios.delete(id);for(const id of remove.sessions)this.sessions.delete(id);for(const id of remove.trainees)this.trainees.delete(id);for(const id of remove.plans)this.plans.delete(id);for(const [kind,id] of remove.training)this.training.delete(kind+':'+id);
+  }
   async init(): Promise<void> {
     // Nothing to initialize.
   }

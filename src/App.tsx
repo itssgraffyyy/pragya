@@ -26,6 +26,7 @@ import { SettingsScreen } from './ui/SettingsScreen';
 import { HistoryScreen } from './ui/HistoryScreen';
 import { initStorage,getStorageWarning } from './core/persistence/appStorage';
 
+const DemoScreen=lazy(()=>import('./ui/DemoScreen').then(m=>({default:m.DemoScreen})));
 const CrewScreen=lazy(()=>import('./ui/CrewScreen').then(m=>({default:m.CrewScreen})));
 const SimulationConsoleScreen=lazy(()=>import('./ui/SimulationConsoleScreen').then(m=>({default:m.SimulationConsoleScreen})));
 export default function App() {
@@ -78,6 +79,7 @@ export default function App() {
         </div>
       )}
       <Suspense fallback={<p role="status">Loading training view…</p>}><RoleBoundary screen={screen}>
+      {screen === 'demo' && <DemoScreen />}
       {screen === 'transfer' && <DataTransferScreen />}
       {screen === 'analytics' && <UnitAnalyticsScreen />}
       {screen === 'instructor' && <InstructorScreen />}

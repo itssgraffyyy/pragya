@@ -1,3 +1,4 @@
+import type { LocalDeletion } from './localDeletion';
 import type { TrainingKind, TrainingRecord } from '../unit/models';
 import type { LearningPlan } from '../learning/plan';
 import type { TraineeProfile } from '../learning/profile';
@@ -43,6 +44,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 export type LocalDataKind='scenarios'|'sessions'|'trainees'|'plans'|'training';
 export interface LocalDataBundle { scenarios:ScenarioDefinition[]; sessions:StoredSession[]; trainees:TraineeProfile[]; plans:LearningPlan[]; training:TrainingRecord[]; settings?:AppSettings }
 export interface StorageAdapter {
+  deleteLocalRecords(expected:LocalDataBundle,remove:LocalDeletion):Promise<void>;
   init(): Promise<void>;
   saveLocalBundle(bundle:LocalDataBundle,insertOnly?:readonly LocalDataKind[]):Promise<void>;
   listTrainingRecords(kind: TrainingKind): Promise<TrainingRecord[]>;
