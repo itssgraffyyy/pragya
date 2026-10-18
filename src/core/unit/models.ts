@@ -1,4 +1,5 @@
-﻿import { z } from 'zod';
+import { crewSessionSchema } from '../crew/models';
+import { z } from 'zod';
 import { objectiveIdSchema } from '../learning/profile';
 const id = z.string().trim().min(1).max(120);
 const name = z.string().trim().min(1).max(100);
@@ -13,7 +14,7 @@ export const cohortSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id
 export const ownershipSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, sessionId:id, traineeId:id, associatedBy:id, associatedAt:timestamp }).strict();
 export const assignmentSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, instructorId:id, traineeId:id, scenarioId:id, objectiveIds:z.array(objectiveIdSchema).max(30), createdAt:timestamp, dueAt:timestamp.nullable(), status:z.enum(['assigned','started','completed','cancelled']), sessionId:id.nullable(), policyKey:id.nullable() }).strict();
 export const annotationSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, authorId:id, traineeId:id, sessionId:id, createdAt:timestamp, text:z.string().trim().min(1).max(4000), objectiveIds:z.array(objectiveIdSchema).max(30) }).strict();
-export const trainingSchemas = { users:userSchema, units:unitSchema, memberships:membershipSchema, instructors:instructorAssignmentSchema, cohorts:cohortSchema, ownership:ownershipSchema, assignments:assignmentSchema, annotations:annotationSchema };
+export const trainingSchemas = { crews:crewSessionSchema, users:userSchema, units:unitSchema, memberships:membershipSchema, instructors:instructorAssignmentSchema, cohorts:cohortSchema, ownership:ownershipSchema, assignments:assignmentSchema, annotations:annotationSchema };
 export type TrainingKind = keyof typeof trainingSchemas;
 export type TrainingRecords = { [K in TrainingKind]: z.infer<(typeof trainingSchemas)[K]> };
 export type TrainingRecord = { [K in TrainingKind]: { kind:K; id:string; value:TrainingRecords[K] } }[TrainingKind];

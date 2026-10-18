@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 
 export type Screen =
+  | 'crew'
   | 'units'
   | 'home'
   | 'scenarios'

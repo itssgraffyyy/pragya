@@ -1,3 +1,4 @@
+import { CrewScreen } from './ui/CrewScreen';
 import { RoleBoundary } from './ui/RoleBoundary';
 import { UnitManagementScreen } from './ui/UnitManagementScreen';
 import { CoachScreen } from './ui/CoachScreen';
@@ -71,6 +72,7 @@ export default function App() {
         </div>
       )}
       <RoleBoundary screen={screen}>
+      {screen === 'crew' && <CrewScreen />}
       {screen === 'units' && <UnitManagementScreen />}
       {screen === 'home' && <HomeScreen />}
       {screen === 'scenarios' && <ScenarioSelectionScreen />}

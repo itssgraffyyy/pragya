@@ -43,7 +43,8 @@ export function buildSessionSummary(engine: SimulationEngine): SessionSummaryRec
     generatorVersion: engine.scenario.generated?.generatorVersion,
     startedAt: engine.startedAtIso ?? new Date().toISOString(),
     endedAt: engine.endedAtIso ?? new Date().toISOString(),
-    durationSimSeconds: engine.simTime,
+    // Event timestamps use millisecond precision; keep the same end boundary.
+    durationSimSeconds: Math.round(engine.simTime * 1000) / 1000,
     status:
       engine.state === 'completed' ? 'completed'
       : engine.state === 'aborted' ? 'aborted'

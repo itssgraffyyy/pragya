@@ -33,3 +33,19 @@ Milestone checks: seven new permission, migration and UI tests passed; 12 existi
 ## Remaining milestones
 
 Duo crew training; instructor control/assignments; unified AAR and annotations; unit analytics; validated data transfer/offline hardening; full integration; compliance and differentiator verification; full regression/performance report; repeatable demo data and documentation. These are not implemented by Phase 1.
+
+## Phase 2: Duo Crew Intelligence
+
+`core/crew/runtime.ts` owns exactly one original SimulationEngine. Participants share its seed and clock; participant observations, detections, committed decisions and structured communication are separately attributed and timestamped. Visual and synthetic-indicator roles receive distinct scripted cue projections. These cues are explicitly synthetic scenario content, not inferred real measurements. Role labels and acknowledgment window are configurable. The three bundled crew definitions cover conflicting cues, multiple ambiguous contacts and degraded information.
+
+Departure pauses the shared engine. Both participants must return before resuming. Persisted unfinished sessions recover paused, reconstructing the original engine to the recorded millisecond clock and retaining its recorded log; a recovery event is disclosed. No unrecorded video or messages are reconstructed.
+
+Each participant commits an individual decision; the joint report requires a reference-linked confirmation from the other participant. Individual and joint assessment projections use the existing Module 2 scorer and original policy snapshot. Wrong individual decisions remain wrong even when a later joint report corrects them. Profile history receives two distinct saved individual sessions, idempotently. Crew records preserve the shared scenario, role assignments, communication, observations, individual IDs, joint result and transparent coordination metrics.
+
+Crew scoring separately measures supported information sharing, timely acknowledgments, decision reconciliation, structured-message clarity, evidence-backed procedural reporting and joint completion. Acknowledgment timing earns no credit for unsupported information. These are educational coordination measures, not real-world readiness metrics. Weight configuration is validated and versioned with the definition.
+
+Home → Duo Crew Mode supports two existing profiles on one laptop, visual scene/indicator projections, turn selection, private individual commitments, eight structured message types, pause/leave/rejoin, completion, shared/individual timelines, missing acknowledgments, discrepancies, original decision dashboards and JSON export. In role mode an instructor must have scope over both trainees; saved crew history is restricted to scoped instructors and participating trainees. Local demo mode remains explicitly unrestricted. Mode B closed-LAN networking is **not implemented or claimed**.
+
+Integration fixed a source timing mismatch: engine events round to milliseconds, while summaries previously retained finer time precision. New summary end times now use the same millisecond precision, preventing a valid last submission from being filtered as a future event. Existing stored summaries are unchanged. A fractional-clock regression verifies the actual saved assessment.
+
+Validation: crew lifecycle/communication/scoring/recovery/persistence tests, permission/isolation checks, recorded-identity validation and fractional-time regression. The real two-person browser journey records both decisions and evidence shares, acknowledgments and a confirmed joint report; it verifies separate assessments, a calculated crew score and persisted AAR after reload. Instructor annotations and broader unified review are subsequent milestones.

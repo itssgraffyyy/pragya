@@ -1,0 +1,5 @@
+﻿import { it,expect } from 'vitest';
+import { SimulationEngine } from '../core/sim/engine';
+import { buildSessionExport } from '../core/sim/sessionSummary';
+import { SCENARIO_SINGLE_RECOGNITION } from '../core/scenario/bundled/scenariosA';
+it('keeps terminal event and summary time at the same millisecond precision',()=>{const scenario=structuredClone(SCENARIO_SINGLE_RECOGNITION);scenario.contacts[0].spawnTime=0;const e=new SimulationEngine({scenario,sessionId:'fractional',traineeId:'one'});e.load();e.start();e.tick(.1236);e.acknowledgeContact('c1');e.setClassification('c1','smallMultirotor');e.setConfidence('c1','high');e.toggleEvidence('c1','rotorSilhouette',true);e.setProceduralResponse('c1','recordAndReport');e.submitAssessment('c1');const saved=buildSessionExport(e);expect(saved.summary.durationSimSeconds).toBe(.124);expect(saved.assessment?.contacts[0].classificationOutcome).toBe('correct');expect(saved.events.events.find(x=>x.type==='assessmentSubmitted')!.simTimestamp).toBe(saved.summary.durationSimSeconds);});
