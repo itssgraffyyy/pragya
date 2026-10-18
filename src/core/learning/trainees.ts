@@ -1,4 +1,5 @@
-﻿import { z } from 'zod';
+import { learningPlanSchema } from './plan';
+import { z } from 'zod';
 import type { StorageAdapter, StoredSession } from '../persistence/storage';
 import { traineeProfileSchema, type TraineeProfile } from './profile';
 import { storedSessionSchema, validSession } from './validation';
@@ -30,11 +31,12 @@ export async function recordProfileSession(storage: StorageAdapter, session: Sto
 }
 export async function exportTrainee(storage: StorageAdapter, profile: TraineeProfile) {
   const history = await traineeHistory(storage, profile);
-  return { kind: 'pragya-trainee-export' as const, exportVersion: 1 as const, profile, sessions: history.sessions };
+  return { kind: 'pragya-trainee-export' as const, exportVersion: 1 as const, profile, sessions: history.sessions, plan: await storage.getLearningPlan(profile.id) };
 }
-const bundleSchema = z.object({ kind: z.literal('pragya-trainee-export'), exportVersion: z.literal(1), profile: traineeProfileSchema, sessions: z.array(storedSessionSchema).max(10000) }).strict();
+const bundleSchema = z.object({ kind: z.literal('pragya-trainee-export'), exportVersion: z.literal(1), profile: traineeProfileSchema, sessions: z.array(storedSessionSchema).max(10000), plan: learningPlanSchema.optional() }).strict();
 export async function importTrainee(storage: StorageAdapter, value: unknown): Promise<TraineeProfile> {
   const bundle = bundleSchema.parse(value);
+  if(bundle.plan && (bundle.plan.traineeId !== bundle.profile.id || bundle.plan.recommendations.some((r)=>r.traineeId!==bundle.profile.id) || bundle.plan.exercises.some((e)=>e.traineeId!==bundle.profile.id)))throw new Error('Foreign learning plan in import');
   const existingProfiles = await storage.listTrainees();
   if (await storage.getTrainee(bundle.profile.id)) throw new Error('Profile ID already exists; import cannot overwrite it');
   const sessions = bundle.sessions as StoredSession[];
@@ -44,6 +46,6 @@ export async function importTrainee(storage: StorageAdapter, value: unknown): Pr
     const existing = await storage.getSession(s.summary.sessionId);
     if (existing && JSON.stringify(existing) !== JSON.stringify(s)) throw new Error('Conflicting session ID; original record preserved');
   }
-  await storage.saveTraineeBundle(bundle.profile, sessions);
+  await storage.saveTraineeBundle(bundle.profile, sessions, bundle.plan);
   return bundle.profile;
 }

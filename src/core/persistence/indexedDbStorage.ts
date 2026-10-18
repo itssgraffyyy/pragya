@@ -104,13 +104,14 @@ export class IndexedDbStorage implements StorageAdapter {
   async listTrainees(): Promise<TraineeProfile[]> { return promisifyRequest(this.tx('trainees', 'readonly').getAll()); }
   async getTrainee(id: string): Promise<TraineeProfile | undefined> { return promisifyRequest(this.tx('trainees', 'readonly').get(id)); }
   async saveTrainee(profile: TraineeProfile): Promise<void> { await promisifyRequest(this.tx('trainees', 'readwrite').put(profile)); }
-  async deleteTrainee(id: string): Promise<void> { await promisifyRequest(this.tx('trainees', 'readwrite').delete(id)); }
-  async saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[]): Promise<void> {
+  async deleteTrainee(id: string): Promise<void> { await promisifyRequest(this.tx('trainees', 'readwrite').delete(id)); await this.deleteLearningPlan(id); }
+  async saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[], plan?: LearningPlan): Promise<void> {
     if (!this.db) throw new Error('Storage not initialized');
     await new Promise<void>((resolve, reject) => {
-      const tx = this.db!.transaction(['trainees', STORE_SESSIONS], 'readwrite');
+      const tx = this.db!.transaction(['trainees', STORE_SESSIONS, 'learningPlans'], 'readwrite');
       tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error ?? new Error('Import aborted'));
       tx.objectStore('trainees').put(profile);
+      if(plan)tx.objectStore('learningPlans').put(plan);
       for (const s of sessions) tx.objectStore(STORE_SESSIONS).put(s);
     });
   }

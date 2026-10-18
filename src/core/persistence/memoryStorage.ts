@@ -67,10 +67,11 @@ export class MemoryStorage implements StorageAdapter {
   async listTrainees(): Promise<TraineeProfile[]> { return structuredClone([...this.trainees.values()]); }
   async getTrainee(id: string): Promise<TraineeProfile | undefined> { return structuredClone(this.trainees.get(id)); }
   async saveTrainee(profile: TraineeProfile): Promise<void> { this.trainees.set(profile.id, structuredClone(profile)); }
-  async deleteTrainee(id: string): Promise<void> { this.trainees.delete(id); }
-  async saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[]): Promise<void> {
+  async deleteTrainee(id: string): Promise<void> { this.trainees.delete(id); this.plans.delete(id); }
+  async saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[], plan?: LearningPlan): Promise<void> {
     for (const s of sessions) this.sessions.set(s.summary.sessionId, structuredClone(s));
     await this.saveTrainee(profile);
+    if(plan) await this.saveLearningPlan(plan);
   }
   async getLearningPlan(id: string): Promise<LearningPlan | undefined> { return structuredClone(this.plans.get(id)); }
   async saveLearningPlan(plan: LearningPlan): Promise<void> { this.plans.set(plan.traineeId, structuredClone(plan)); }

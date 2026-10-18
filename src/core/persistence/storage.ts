@@ -58,7 +58,7 @@ export interface StorageAdapter {
   getTrainee(id: string): Promise<TraineeProfile | undefined>;
   saveTrainee(profile: TraineeProfile): Promise<void>;
   deleteTrainee(id: string): Promise<void>;
-  saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[]): Promise<void>;
+  saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[], plan?: LearningPlan): Promise<void>;
   getLearningPlan(traineeId: string): Promise<LearningPlan | undefined>;
   saveLearningPlan(plan: LearningPlan): Promise<void>;
   deleteLearningPlan(traineeId: string): Promise<void>;
