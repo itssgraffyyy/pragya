@@ -55,7 +55,7 @@ export function HomeScreen() {
           an offline-first recognition training simulator.
         </p>
         <p className="mt-1 text-xs text-console-muted">
-          Module 1: Simulation &amp; Scenario Engine — training content only; no real-world
+          Simulation · assessment · personalized learning · crew and unit review — training content only; no real-world
           targeting, jamming or counter-drone tactics.
         </p>
       </div>

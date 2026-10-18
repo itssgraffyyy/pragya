@@ -9,7 +9,7 @@ export function assessmentExport(session: StoredSession, result: AssessmentResul
 
 export function csvCell(value: unknown): string {
   let text = String(value ?? '');
-  if (/^[=+@\-\t\r]/.test(text)) text = "'" + text;
+  if (/^\s*[=+@-]/.test(text) || /^[\t\r\n]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 

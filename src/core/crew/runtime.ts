@@ -46,7 +46,7 @@ export class CrewRuntime {
   this.active(actorId);this.contact(contactId);if(!['shareObservation','requestClarification','acknowledgeInformation','flagUncertainty','submitEvidence','sendProceduralReport','confirmReceipt','recordHandoff'].includes(kind))throw new Error('Unknown communication');
   const previous=replyTo?this.data.events.find(e=>e.id===replyTo):undefined;
   if(replyTo&&(!previous||previous.actorId===actorId||previous.contactId!==contactId))throw new Error('Reply must reference the other participant on this contact');
-  if(['acknowledgeInformation','confirmReceipt'].includes(kind)&&(!previous||!['shareObservation','sendProceduralReport','requestClarification','submitEvidence','recordHandoff'].includes(previous.kind)))throw new Error('An acknowledgeable message is required');
+  if(['acknowledgeInformation','confirmReceipt'].includes(kind)&&(!previous||!['shareObservation','sendProceduralReport','requestClarification','submitEvidence','recordHandoff','flagUncertainty'].includes(previous.kind)))throw new Error('An acknowledgeable message is required');
   const observation=this.data.events.find(e=>e.actorId===actorId&&e.contactId===contactId&&e.kind==='observation');
   if(!observation)throw new Error('No recorded observation');
   if(['shareObservation','submitEvidence'].includes(kind)&&(!evidence.length||evidence.some(x=>!observation.observation!.availableEvidence.includes(x))))throw new Error('Share evidence from your recorded observation');
@@ -55,7 +55,11 @@ export class CrewRuntime {
    const shared=this.data.events.filter(e=>e.contactId===contactId&&e.kind==='shareObservation').flatMap(e=>e.evidence);
    if(decision.evidence.some(x=>!shared.includes(x)))throw new Error('Joint report evidence must have been shared');
   }
-  return this.append(actorId,kind,{contactId,evidence,replyTo,decision});
+  const event=this.append(actorId,kind,{contactId,evidence,replyTo,decision});
+  if(kind==='shareObservation'&&!this.engine.log.getAll().some(e=>e.type==='contactAcknowledged'&&e.contactId===contactId)){
+   const contact=this.engine.traineeView().contacts.find(c=>c.id===contactId);if(contact&&(contact.visibility==='visible'||contact.visibility==='occluded')){this.engine.acknowledgeContact(contactId);const logged=this.engine.log.getAll()[this.engine.log.length-1];logged.actionDetails={...logged.actionDetails,crewCommunicationId:event.id};}
+  }
+  return event;
  }
  complete(actorId:string){this.active(actorId);for(const c of this.data.definition.scenario.contacts){if(this.data.participants.some(p=>!this.data.events.some(e=>e.actorId===p.traineeId&&e.kind==='decision'&&e.contactId===c.id)))throw new Error('Both individual decisions required');if(!this.confirmedReport(c.id))throw new Error('Confirmed joint report required for every contact');}this.finish(false);}
  private confirmedReport(contactId:string){return [...this.data.events].reverse().find(e=>e.contactId===contactId&&e.kind==='sendProceduralReport'&&e.decision&&this.data.events.some(a=>a.kind==='confirmReceipt'&&a.replyTo===e.id&&a.actorId!==e.actorId&&a.sequence>e.sequence));}

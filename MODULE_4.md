@@ -97,3 +97,17 @@ Crew completion now commits its shared record, both individual results, profile 
 Eight backup/transfer tests verify real unit/assignment/policy/profile/learning/crew/note round-trip, original score preservation, checksum/version/duplicate rejection, ownership rejection even after recomputing a checksum, strict event fields, local-owner permissions, linked-profile protection, standalone imports and rollback/insert conflicts on both adapters. The offline launcher test passes. Disconnected browser journeys and final regression results follow in TEST_REPORT.md.
 
 Full local backups are explicitly local-owner tooling in unrestricted demo mode; role-scoped exports remain separate. Checksums are not signatures or encryption. OS/browser-profile access controls remain necessary; no secure authentication, hostile-user protection, closed-LAN synchronization or packaged executable is claimed. Installation, storage location, backup/recovery and setup instructions are in `docs/OFFLINE_DEPLOYMENT.md`.
+
+## Phase 7: four-module integration
+
+The assigned-session integration test verifies one original engine's events become the chosen Module 2 assessment, the Module 3 learning snapshot and the Module 4 unit measurement, with the same policy version throughout. Missing policy snapshots cannot establish comparable historical baselines.
+
+Home describes all four workflows. The simulation and crew renderer routes load lazily; offline precaching includes every generated chunk. The initial JavaScript entry decreased from roughly 1,332 KB (365 KB gzip) to 459 KB (130 KB gzip) in the integration build. The shared 3D chunk remains large and its advisory is documented rather than hidden.
+
+A browser-local Web Lock permits only one live host for a crew ID in the same browser profile/origin. Another tab is denied control; leaving the workspace pauses and saves the clock before releasing ownership, and the next host rereads the saved prefix. Terminal AAR is read-only. This is not LAN synchronization or authentication. Crew clock progression uses one animation-frame loop; the visual projection samples that engine without advancing another clock, while panels and persistence update less frequently.
+
+Participant switches restore only that person's committed fields or fresh defaults, preventing another participant's private choice from appearing in the next form. Shared procedural reports display actual classification, confidence, response and evidence. Uncertainty messages accept acknowledgments; AAR lists all unacknowledged structured messages separately from the observation-share scoring metric. The degraded crew template now uses the original engine's intermittent-loss condition under a new scenario version; historical snapshots remain unchanged. Crew sharing expectations and metric weights are instructor-configurable and validated.
+
+Validation covers cross-module contracts, conservative comparability, crew communication and role isolation, renderer splitting/offline loading, participant form isolation and two-tab host takeover. Full final results are recorded in TEST_REPORT.md.
+
+Joint detection now records a source-linked original-engine acknowledgment at the first visible shared observation, while individual detection still derives only from each participant's own recorded acknowledgment. Resumable shared logs validate the original engine event sequence; old stored assessments are not recalculated.

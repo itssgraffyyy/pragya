@@ -13,3 +13,5 @@ export function longitudinalAar(profile:TraineeProfile,sessions:StoredSession[],
 }
 /** Each frame is a projection of the actual recorded prefix, never an inferred feed/video. */
 export function crewReviewFrames(session:CrewSession){return session.events.map((event,index)=>{const prefix=session.events.slice(0,index+1);return {event,observations:session.participants.map(p=>({traineeId:p.traineeId,observations:prefix.filter(e=>e.kind==='observation'&&e.actorId===p.traineeId)})),communications:prefix.filter(e=>['shareObservation','requestClarification','acknowledgeInformation','flagUncertainty','submitEvidence','sendProceduralReport','confirmReceipt','recordHandoff'].includes(e.kind)),decisions:prefix.filter(e=>e.kind==='decision')};});}
+
+export function crewCommunicationGaps(session:CrewSession){return session.events.filter(e=>['shareObservation','requestClarification','flagUncertainty','submitEvidence','sendProceduralReport','recordHandoff'].includes(e.kind)&&!session.events.some(a=>['acknowledgeInformation','confirmReceipt'].includes(a.kind)&&a.replyTo===e.id&&a.actorId!==e.actorId&&a.sequence>e.sequence));}
