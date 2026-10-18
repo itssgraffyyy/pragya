@@ -1,3 +1,4 @@
+import type { TraineeProfile } from '../learning/profile';
 /**
  * In-memory storage adapter — used by unit tests and as a fallback when
  * IndexedDB is unavailable (e.g. private browsing quirks).
@@ -12,6 +13,7 @@ import {
 } from './storage';
 
 export class MemoryStorage implements StorageAdapter {
+  private trainees = new Map<string, TraineeProfile>();
   private scenarios = new Map<string, ScenarioDefinition>();
   private sessions = new Map<string, StoredSession>();
   private settings: AppSettings = { ...DEFAULT_SETTINGS };
@@ -60,7 +62,16 @@ export class MemoryStorage implements StorageAdapter {
     this.settings = { ...settings };
   }
 
+  async listTrainees(): Promise<TraineeProfile[]> { return structuredClone([...this.trainees.values()]); }
+  async getTrainee(id: string): Promise<TraineeProfile | undefined> { return structuredClone(this.trainees.get(id)); }
+  async saveTrainee(profile: TraineeProfile): Promise<void> { this.trainees.set(profile.id, structuredClone(profile)); }
+  async deleteTrainee(id: string): Promise<void> { this.trainees.delete(id); }
+  async saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[]): Promise<void> {
+    for (const s of sessions) this.sessions.set(s.summary.sessionId, structuredClone(s));
+    await this.saveTrainee(profile);
+  }
   async clearAll(): Promise<void> {
+    this.trainees.clear();
     this.scenarios.clear();
     this.sessions.clear();
     this.settings = { ...DEFAULT_SETTINGS };

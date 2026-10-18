@@ -1,3 +1,4 @@
+import { TraineeProfilesScreen } from './ui/TraineeProfilesScreen';
 /**
  * App shell — screen router + persistence hydration.
  */
@@ -71,6 +72,7 @@ export default function App() {
       {screen === 'editor' && <InstructorEditorScreen />}
       {screen === 'settings' && <SettingsScreen />}
       {screen === 'history' && <HistoryScreen />}
+      {screen === 'trainees' && <TraineeProfilesScreen />}
     </div>
   );
 }

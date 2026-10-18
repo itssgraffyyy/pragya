@@ -1,3 +1,4 @@
+import { recordProfileSession } from '../core/learning/trainees';
 import { initStorage } from '../core/persistence/appStorage';
 /**
  * Simulation store (Zustand).
@@ -247,7 +248,7 @@ function captureSession(engine: SimulationEngine, set: (partial: Partial<Simulat
   if (existing && existing.summary.endedAt === engine.endedAtIso) return existing;
   const envelope = buildSessionExport(engine);
   capturedSessions.set(engine, envelope);
-  void initStorage().then((storage) => storage.saveSession(envelope)).catch((error: unknown) => {
+  void initStorage().then((storage) => storage.saveSession(envelope).then(() => recordProfileSession(storage, envelope))).catch((error: unknown) => {
     set({ lastActionError: `Session could not be saved: ${error instanceof Error ? error.message : String(error)}` });
   });
   return envelope;

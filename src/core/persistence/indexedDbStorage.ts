@@ -1,3 +1,4 @@
+import type { TraineeProfile } from '../learning/profile';
 /**
  * IndexedDB storage adapter for the desktop app.
  * Database: pragya-local / version 1
@@ -9,7 +10,7 @@ import type { AppSettings, StorageAdapter, StoredSession } from './storage';
 import { DEFAULT_SETTINGS } from './storage';
 
 const DB_NAME = 'pragya-local';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_SCENARIOS = 'scenarios';
 const STORE_SESSIONS = 'sessions';
 const STORE_SETTINGS = 'settings';
@@ -33,6 +34,8 @@ export class IndexedDbStorage implements StorageAdapter {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onupgradeneeded = () => {
         const db = request.result;
+        // v2 adds profiles without rewriting v1 scenario/session/settings records.
+        if (!db.objectStoreNames.contains('trainees')) db.createObjectStore('trainees', { keyPath: 'id' });
         if (!db.objectStoreNames.contains(STORE_SCENARIOS)) {
           db.createObjectStore(STORE_SCENARIOS, { keyPath: 'id' });
         }
@@ -96,7 +99,21 @@ export class IndexedDbStorage implements StorageAdapter {
     await promisifyRequest(this.tx(STORE_SETTINGS, 'readwrite').put(settings, SETTINGS_KEY));
   }
 
+  async listTrainees(): Promise<TraineeProfile[]> { return promisifyRequest(this.tx('trainees', 'readonly').getAll()); }
+  async getTrainee(id: string): Promise<TraineeProfile | undefined> { return promisifyRequest(this.tx('trainees', 'readonly').get(id)); }
+  async saveTrainee(profile: TraineeProfile): Promise<void> { await promisifyRequest(this.tx('trainees', 'readwrite').put(profile)); }
+  async deleteTrainee(id: string): Promise<void> { await promisifyRequest(this.tx('trainees', 'readwrite').delete(id)); }
+  async saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[]): Promise<void> {
+    if (!this.db) throw new Error('Storage not initialized');
+    await new Promise<void>((resolve, reject) => {
+      const tx = this.db!.transaction(['trainees', STORE_SESSIONS], 'readwrite');
+      tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error ?? new Error('Import aborted'));
+      tx.objectStore('trainees').put(profile);
+      for (const s of sessions) tx.objectStore(STORE_SESSIONS).put(s);
+    });
+  }
   async clearAll(): Promise<void> {
+    await promisifyRequest(this.tx('trainees', 'readwrite').clear());
     await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').clear());
     await promisifyRequest(this.tx(STORE_SESSIONS, 'readwrite').clear());
     await promisifyRequest(this.tx(STORE_SETTINGS, 'readwrite').clear());

@@ -1,3 +1,4 @@
+import type { TraineeProfile } from '../learning/profile';
 import type { AssessmentResult } from '../scoring/results';
 import type { ScoringPolicy } from '../scoring/policy';
 /**
@@ -52,6 +53,11 @@ export interface StorageAdapter {
   // Settings
   getSettings(): Promise<AppSettings>;
   saveSettings(settings: AppSettings): Promise<void>;
+  listTrainees(): Promise<TraineeProfile[]>;
+  getTrainee(id: string): Promise<TraineeProfile | undefined>;
+  saveTrainee(profile: TraineeProfile): Promise<void>;
+  deleteTrainee(id: string): Promise<void>;
+  saveTraineeBundle(profile: TraineeProfile, sessions: StoredSession[]): Promise<void>;
   // Maintenance
   clearAll(): Promise<void>;
 }
