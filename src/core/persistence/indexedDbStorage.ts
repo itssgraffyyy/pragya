@@ -72,6 +72,10 @@ export class IndexedDbStorage implements StorageAdapter {
     await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').put(scenario));
   }
 
+  async saveScenarioPublication(scenario:ScenarioDefinition,records:TrainingRecord[]):Promise<void> {
+    if(!this.db)throw new Error('Storage not initialized');
+    await new Promise<void>((resolve,reject)=>{const tx=this.db!.transaction([STORE_SCENARIOS,'training'],'readwrite');tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Scenario publication aborted'));try{tx.objectStore(STORE_SCENARIOS).put(scenario);for(const record of records)tx.objectStore('training').put(record);}catch(error){tx.abort();reject(error);}});
+  }
   async deleteScenario(id: string): Promise<void> {
     await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').delete(id));
   }

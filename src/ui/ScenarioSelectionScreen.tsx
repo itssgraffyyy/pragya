@@ -1,9 +1,14 @@
+import { initStorage } from '../core/persistence/appStorage';
+import { scenarioLibrary } from '../core/instructor/service';
+import { records } from '../core/unit/service';
+import { useIdentityStore } from '../store/identityStore';
+import type { ScenarioDefinition } from '../core/types';
 /**
  * Scenario Selection — bundled scripted scenarios + link to the generator.
  * Ground truth is never shown here; only training metadata.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
 import { useUiStore } from '../store/uiStore';
 import { useSimulationStore } from '../store/simulationStore';
@@ -16,18 +21,20 @@ const DIFFICULTY_BADGE: Record<string, string> = {
 };
 
 export function ScenarioSelectionScreen() {
+  const userId=useIdentityStore(s=>s.userId);const [library,setLibrary]=useState<ScenarioDefinition[]>(BUNDLED_SCENARIOS);const [libraryError,setLibraryError]=useState('');
+  useEffect(()=>{let live=true;void (async()=>{const storage=await initStorage();const memberships=await records(storage,'memberships');const preferred=localStorage.getItem('pragya-instructor-unit');const allowed=memberships.filter(m=>m.userId===userId&&!m.archived);const unit=userId?(allowed.find(m=>m.unitId===preferred)?.unitId??allowed[0]?.unitId??null):null;const scenarios=await scenarioLibrary(storage,unit);if(live)setLibrary(scenarios);})().catch(e=>setLibraryError(String(e)));return()=>{live=false;};},[userId]);
   const navigate = useUiStore((s) => s.navigate);
   const openScenario = useUiStore((s) => s.openScenario);
   const loadScenario = useSimulationStore((s) => s.loadScenario);
   const traineeId = useSettingsStore((s) => s.traineeId);
   const [filter, setFilter] = useState<'all' | 'basic' | 'intermediate' | 'advanced'>('all');
 
-  const scenarios = BUNDLED_SCENARIOS.filter(
+  const scenarios = library.filter(
     (s) => filter === 'all' || s.difficulty === filter,
   );
 
   const begin = (scenarioId: string) => {
-    const scenario = BUNDLED_SCENARIOS.find((s) => s.id === scenarioId);
+    const scenario = library.find((s) => s.id === scenarioId);
     if (!scenario) return;
     const sessionId = `sess-${Date.now().toString(36)}`;
     loadScenario(scenario, sessionId, traineeId);
@@ -60,7 +67,7 @@ export function ScenarioSelectionScreen() {
         ))}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      {libraryError&&<p role="alert">{libraryError}</p>}<div className="grid gap-4 sm:grid-cols-2">
         {scenarios.map((s) => (
           <div key={s.id} className="panel p-4 flex flex-col gap-2" data-testid={`scenario-card-${s.id}`}>
             <div className="flex items-start justify-between gap-2">

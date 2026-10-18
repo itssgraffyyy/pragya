@@ -1,10 +1,16 @@
+import { initStorage } from '../core/persistence/appStorage';
+import { scenarioLibrary,saveScenarioDocument } from '../core/instructor/service';
+import { records } from '../core/unit/service';
+import { useIdentityStore } from '../store/identityStore';
+import type { ScenarioDefinition } from '../core/types';
+import type { TrainingRecords } from '../core/unit/models';
 /**
  * Instructor Editor — create/edit/validate/import/export scenarios.
  * Validation uses the same schema as the runtime; broken scenarios are
  * never playable. Ground truth IS visible here (instructor tool).
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseScenarioJson } from '../core/scenario/validate';
 import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
 import { useUiStore } from '../store/uiStore';
@@ -13,6 +19,9 @@ import { useSettingsStore } from '../store/settingsStore';
 import { SCHEMA_VERSION } from '../core/types';
 
 export function InstructorEditorScreen() {
+  const userId=useIdentityStore(s=>s.userId);const [library,setLibrary]=useState<ScenarioDefinition[]>(BUNDLED_SCENARIOS);const [documents,setDocuments]=useState<TrainingRecords['scenarioDocuments'][]>([]);const [unitId,setUnitId]=useState<string|null>(null);
+  async function refresh(){const storage=await initStorage();const memberships=await records(storage,'memberships');const preferred=localStorage.getItem('pragya-instructor-unit');const allowed=memberships.filter(m=>m.userId===userId&&!m.archived&&m.role==='instructor');const selected=userId?(allowed.find(m=>m.unitId===preferred)?.unitId??allowed[0]?.unitId??null):null;setUnitId(selected);setLibrary(await scenarioLibrary(storage,selected));setDocuments((await records(storage,'scenarioDocuments')).filter(d=>d.unitId===selected));}
+  useEffect(()=>{void refresh().catch(e=>setValidation({valid:false,errors:[String(e)]}));},[userId]);
   const navigate = useUiStore((s) => s.navigate);
   const loadScenario = useSimulationStore((s) => s.loadScenario);
   const traineeId = useSettingsStore((s) => s.traineeId);
@@ -22,7 +31,8 @@ export function InstructorEditorScreen() {
   const [saved, setSaved] = useState<string | null>(null);
 
   const loadIntoEditor = (id: string) => {
-    const scenario = BUNDLED_SCENARIOS.find((s) => s.id === id);
+    const document=documents.find(d=>d.scenarioId===id);const scenario = library.find((s) => s.id === id);
+    if(document){setSelectedId(id);setText(document.draftText);setValidation(null);setSaved(null);return;}
     if (!scenario) return;
     setSelectedId(id);
     setText(JSON.stringify(scenario, null, 2));
@@ -35,13 +45,12 @@ export function InstructorEditorScreen() {
     setValidation({ valid: result.valid, errors: result.errors });
   };
 
-  const doSave = () => {
-    const result = parseScenarioJson(text);
-    setValidation({ valid: result.valid, errors: result.errors });
-    if (result.valid) setSaved(result.scenario!.id);
+  const persist = async (status:'draft'|'published'|'archived') => {
+    try{const storage=await initStorage();const document=await saveScenarioDocument(storage,userId?{userId}:null,unitId,text,status,selectedId);setSelectedId(document.scenarioId);setSaved(`${document.scenarioId} (${status})`);setValidation({valid:true,errors:[]});await refresh();}catch(e){setValidation({valid:false,errors:[(e as Error).message]});}
   };
-
+  const doSave = () => {void persist('published');};
   const doImport = (file: File) => {
+    if(file.size>500000){setValidation({valid:false,errors:['Scenario file exceeds 500 KB']});return;}
     file.text().then((t) => {
       setText(t);
       const result = parseScenarioJson(t);
@@ -69,7 +78,7 @@ export function InstructorEditorScreen() {
     const result = parseScenarioJson(text);
     setValidation({ valid: result.valid, errors: result.errors });
     if (result.valid) {
-      loadScenario(result.scenario!, `preview-${Date.now().toString(36)}`, traineeId);
+      loadScenario(result.scenario!, `preview-${Date.now().toString(36)}`, userId?`preview:${userId}`:traineeId);
       navigate('console');
     }
   };
@@ -90,11 +99,12 @@ export function InstructorEditorScreen() {
           className="bg-console-bg border border-console-border rounded px-2 py-1 text-sm"
           data-testid="editor-scenario-select"
         >
-          {BUNDLED_SCENARIOS.map((s) => (
+          {library.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.title}
+              {s.title} {documents.find(d=>d.scenarioId===s.id)?.status??''}
             </option>
           ))}
+          {documents.filter(d=>!library.some(s=>s.id===d.scenarioId)).map(d=><option key={d.id} value={d.scenarioId}>{d.title} ({d.status})</option>)}
         </select>
         <button onClick={doValidate} className="border border-console-border px-3 py-1 rounded text-sm" data-testid="editor-validate">
           Validate
@@ -102,6 +112,7 @@ export function InstructorEditorScreen() {
         <button onClick={doSave} className="border border-console-border px-3 py-1 rounded text-sm" data-testid="editor-save">
           Save
         </button>
+<button onClick={()=>void persist('draft')} className="border p-2">Save draft</button><button onClick={()=>{const result=parseScenarioJson(text);if(!result.valid){setValidation({valid:false,errors:result.errors});return;}const copy={...result.scenario!,id:`custom-${crypto.randomUUID()}`,title:`${result.scenario!.title} (copy)`,version:'1.0.0'};setSelectedId(copy.id);setText(JSON.stringify(copy,null,2));setSaved(null);}}>Duplicate scenario</button><button onClick={()=>void persist('archived')} className="border p-2">Archive scenario</button>
         <button onClick={doExport} className="border border-console-border px-3 py-1 rounded text-sm" data-testid="editor-export">
           Export JSON
         </button>
@@ -137,7 +148,7 @@ export function InstructorEditorScreen() {
           data-testid="editor-validation"
         >
           {validation.valid ? (
-            <p>✓ Scenario is valid.</p>
+            <p>✓ Input accepted.</p>
           ) : (
             <ul className="list-disc pl-4 text-sm">
               {validation.errors.map((e, i) => (
@@ -147,7 +158,7 @@ export function InstructorEditorScreen() {
           )}
         </div>
       )}
-      {saved && <p className="mt-2 text-console-ok text-sm">Saved "{saved}" to working set.</p>}
+      {saved && <p className="mt-2 text-console-ok text-sm">Saved "{saved}" to local storage.</p>}
     </div>
   );
 }

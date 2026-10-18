@@ -48,6 +48,7 @@ export interface StorageAdapter {
   listScenarios(): Promise<ScenarioDefinition[]>;
   getScenario(id: string): Promise<ScenarioDefinition | undefined>;
   saveScenario(scenario: ScenarioDefinition): Promise<void>;
+  saveScenarioPublication(scenario:ScenarioDefinition, records:TrainingRecord[]):Promise<void>;
   deleteScenario(id: string): Promise<void>;
   // Sessions
   listSessions(): Promise<StoredSession[]>;

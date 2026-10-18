@@ -1,3 +1,4 @@
+import { InstructorScreen } from './ui/InstructorScreen';
 import { CrewScreen } from './ui/CrewScreen';
 import { RoleBoundary } from './ui/RoleBoundary';
 import { UnitManagementScreen } from './ui/UnitManagementScreen';
@@ -72,6 +73,7 @@ export default function App() {
         </div>
       )}
       <RoleBoundary screen={screen}>
+      {screen === 'instructor' && <InstructorScreen />}
       {screen === 'crew' && <CrewScreen />}
       {screen === 'units' && <UnitManagementScreen />}
       {screen === 'home' && <HomeScreen />}

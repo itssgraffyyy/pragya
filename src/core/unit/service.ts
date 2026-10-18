@@ -1,4 +1,5 @@
-﻿import type { StorageAdapter } from '../persistence/storage';
+import { createProfile } from '../learning/profile';
+import type { StorageAdapter } from '../persistence/storage';
 import { trainingSchemas, type TrainingKind, type TrainingRecords, type LocalActor, type Permission, type TrainingRecord } from './models';
 /** Local identity selection is a workflow boundary, not OS/browser authentication. */
 export async function records<K extends TrainingKind>(storage:StorageAdapter,kind:K):Promise<TrainingRecords[K][]> {
@@ -84,4 +85,9 @@ export async function createAdditionalUnit(storage:StorageAdapter,actor:LocalAct
   const now=new Date().toISOString();const unit=trainingSchemas.units.parse({schemaVersion:1,id:crypto.randomUUID(),name,description:'',archived:false,createdAt:now});
   const membership=trainingSchemas.memberships.parse({schemaVersion:1,id:crypto.randomUUID(),unitId:unit.id,userId:actor.userId,role:'commander',archived:false,joinedAt:now});
   await storage.saveTrainingRecords([{kind:'units',id:unit.id,value:unit},{kind:'memberships',id:membership.id,value:membership}]);return unit;
+}
+
+export async function createUnitTrainee(storage:StorageAdapter,actor:LocalActor,unitId:string,displayName:string){
+ await authorize(storage,actor,unitId,'manageUnit');
+ const profile=createProfile(displayName);await storage.saveTrainee(profile);await addLocalUser(storage,actor,unitId,profile.displayName,'trainee',profile.id);return profile;
 }

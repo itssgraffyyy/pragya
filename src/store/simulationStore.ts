@@ -1,3 +1,7 @@
+import { reconcileAssignment } from '../core/instructor/service';
+import type { ScoringPolicy } from '../core/scoring/policy';
+export interface AssignmentContext { assignmentId:string; unitId:string; policy:ScoringPolicy }
+const assignmentContexts=new WeakMap<SimulationEngine,AssignmentContext>();
 import { reconcileLearningSession } from '../core/learning/adaptive';
 import { recordProfileSession } from '../core/learning/trainees';
 import { initStorage } from '../core/persistence/appStorage';
@@ -36,7 +40,7 @@ export interface SimulationStore {
   learningRevision: number;
 
   /** Load a scenario and prepare the session (idle -> ready). */
-  loadScenario: (scenario: ScenarioDefinition, sessionId: string, traineeId: string) => void;
+  loadScenario: (scenario: ScenarioDefinition, sessionId: string, traineeId: string, context?:AssignmentContext) => void;
   start: () => void;
   pause: () => void;
   resume: () => void;
@@ -83,10 +87,11 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
   learningPending: false,
   learningRevision: 0,
 
-  loadScenario: (scenario, sessionId, traineeId) => {
+  loadScenario: (scenario, sessionId, traineeId, context) => {
     try {
       const engine = new SimulationEngine({ scenario, sessionId, traineeId });
       engine.load();
+      if(context)assignmentContexts.set(engine,structuredClone(context));
       syncFromEngine(set, engine);
       set((s) => ({ revision: s.revision + 1, lastActionError: null, lastSummary: null, lastExport: null }));
     } catch (e) {
@@ -132,6 +137,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
     const { engine } = get();
     if (!engine) return;
     try {
+      if(assignmentContexts.has(engine))throw new Error('Assigned exercises require a new instructor assignment before restarting.');
       capturedSessions.delete(engine);
       engine.restart();
       set({ lastSummary: null, lastExport: null, lastActionError: null });
@@ -251,10 +257,11 @@ const capturedSessions = new WeakMap<SimulationEngine, SessionExportEnvelope>();
 function captureSession(engine: SimulationEngine, set: (partial: Partial<SimulationStore>) => void): SessionExportEnvelope {
   const existing = capturedSessions.get(engine);
   if (existing && existing.summary.endedAt === engine.endedAtIso) return existing;
-  const envelope = buildSessionExport(engine);
+  const context=assignmentContexts.get(engine);
+  const envelope = buildSessionExport(engine,context?.policy);
   capturedSessions.set(engine, envelope);
   set({ learningPending: true });
-  void initStorage().then((storage) => storage.saveSession(envelope).then(() => recordProfileSession(storage, envelope)).then(() => reconcileLearningSession(storage, envelope))).then(() => {
+  void initStorage().then((storage) => storage.saveSession(envelope).then(() => recordProfileSession(storage, envelope)).then(() => reconcileLearningSession(storage, envelope)).then(()=>context?reconcileAssignment(storage,context.assignmentId,envelope):undefined)).then(() => {
     set({ learningPending: false, learningRevision: useSimulationStore.getState().learningRevision + 1 });
   }).catch((error: unknown) => {
     set({ learningPending: false, lastActionError: `Session or learning update failed: ${error instanceof Error ? error.message : String(error)}` });

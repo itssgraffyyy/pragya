@@ -40,6 +40,9 @@ export class MemoryStorage implements StorageAdapter {
     this.scenarios.set(scenario.id, scenario);
   }
 
+  async saveScenarioPublication(scenario:ScenarioDefinition,records:TrainingRecord[]):Promise<void> {
+    const bundle=structuredClone({scenario,records});this.scenarios.set(bundle.scenario.id,bundle.scenario);for(const r of bundle.records)this.training.set(r.kind+':'+r.id,r);
+  }
   async deleteScenario(id: string): Promise<void> {
     this.scenarios.delete(id);
   }

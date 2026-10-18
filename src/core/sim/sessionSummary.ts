@@ -1,3 +1,4 @@
+import type { ScoringPolicy } from '../scoring/policy';
 import type { StoredSession } from '../persistence/storage';
 import { assessStoredSession } from '../scoring/storedSession';
 import { POLICY_BASIC_RECOGNITION } from '../scoring/samplePolicies';
@@ -63,12 +64,12 @@ export interface SessionExportEnvelope extends StoredSession {
   events: ReturnType<SimulationEngine['log']['export']>;
 }
 
-export function buildSessionExport(engine: SimulationEngine): SessionExportEnvelope {
+export function buildSessionExport(engine: SimulationEngine, policy: ScoringPolicy = POLICY_BASIC_RECOGNITION): SessionExportEnvelope {
   const session: StoredSession = { summary: buildSessionSummary(engine), events: engine.log.export() };
   return {
     ...session,
-    assessment: assessStoredSession(session),
-    scoringPolicy: POLICY_BASIC_RECOGNITION,
+    assessment: assessStoredSession(session, policy),
+    scoringPolicy: structuredClone(policy),
     exportVersion: EVENT_LOG_VERSION,
     kind: 'pragya-session-export',
     summary: buildSessionSummary(engine),
