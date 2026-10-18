@@ -25,6 +25,8 @@ export type Screen =
 
 interface UiStore {
   screen: Screen;
+  pendingReviewNoteId:string|null;
+  assignFromReview:(id:string)=>void;
   /** Scenario selected for preview in the editor or for play. */
   pendingScenarioId: string | null;
   navigate: (screen: Screen) => void;
@@ -33,6 +35,8 @@ interface UiStore {
 
 export const useUiStore = create<UiStore>((set) => ({
   screen: 'home',
+  pendingReviewNoteId:null,
+  assignFromReview:(id)=>set({pendingReviewNoteId:id,screen:'instructor'}),
   pendingScenarioId: null,
   navigate: (screen) => set({ screen }),
   openScenario: (scenarioId, target) =>

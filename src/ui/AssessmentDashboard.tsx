@@ -1,3 +1,4 @@
+import { ReviewLearningContext } from './ReviewLearningContext';
 import { useEffect, useMemo, useState } from 'react';
 import type { StoredSession } from '../core/persistence/storage';
 import { getStorage } from '../core/persistence/appStorage';
@@ -83,5 +84,6 @@ export function AssessmentDashboard({ session, historySessions }: { session: Sto
         {result.explanations.filter((e) => e.contactId === c.contactId).map((e) => <div className="my-2" key={e.category}><strong>{e.category}</strong><p>{e.whatHappened} {e.why}</p><p>{e.availableInfo}</p><p className="text-xs">Rule: {e.ruleRef}. Revisit: {e.revisitObjective}</p></div>)}
       </details>)}
     </div>
+    <ReviewLearningContext session={session} history={history}/>
   </section>;
 }

@@ -1,0 +1,7 @@
+﻿import type { StorageAdapter } from '../persistence/storage';
+import type { LocalActor } from '../unit/models';
+import { trainingSchemas } from '../unit/models';
+import { authorize,records,writeRecord } from '../unit/service';
+import { authorizedCrewHistory } from '../crew/runtime';
+export async function readCrewAnnotations(storage:StorageAdapter,actor:LocalActor,crewId:string){const crew=(await records(storage,'crews')).find(c=>c.id===crewId);if(!crew?.unitId)throw new Error('Unit crew session required');if(!(await authorizedCrewHistory(storage,actor,crew.unitId)).some(c=>c.id===crewId))throw new Error('Access denied to this crew');return (await records(storage,'crewAnnotations')).filter(n=>n.crewId===crewId&&n.unitId===crew.unitId);}
+export async function annotateCrew(storage:StorageAdapter,actor:LocalActor,crewId:string,text:string,objectiveIds:string[]=[]){const crew=(await records(storage,'crews')).find(c=>c.id===crewId);if(!crew?.unitId||!['completed','aborted'].includes(crew.status))throw new Error('A finished unit crew session is required');for(const p of crew.participants)await authorize(storage,actor,crew.unitId,'reviewTrainee',p.traineeId);const note=trainingSchemas.crewAnnotations.parse({schemaVersion:1,id:crypto.randomUUID(),unitId:crew.unitId,crewId,authorId:actor.userId,createdAt:new Date().toISOString(),text,objectiveIds});await writeRecord(storage,'crewAnnotations',note);return note;}
