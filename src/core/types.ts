@@ -306,7 +306,7 @@ export const SIMULATION_TRANSITIONS: Record<SimulationState, SimulationState[]> 
   loading: ['ready', 'error'],
   ready: ['running', 'aborted', 'error'],
   running: ['paused', 'completed', 'aborted', 'error'],
-  paused: ['running', 'aborted', 'error'],
+  paused: ['running', 'completed', 'aborted', 'error'],
   completed: ['idle'],
   aborted: ['idle'],
   error: ['idle'],

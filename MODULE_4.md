@@ -111,3 +111,11 @@ Participant switches restore only that person's committed fields or fresh defaul
 Validation covers cross-module contracts, conservative comparability, crew communication and role isolation, renderer splitting/offline loading, participant form isolation and two-tab host takeover. Full final results are recorded in TEST_REPORT.md.
 
 Joint detection now records a source-linked original-engine acknowledgment at the first visible shared observation, while individual detection still derives only from each participant's own recorded acknowledgment. Resumable shared logs validate the original engine event sequence; old stored assessments are not recalculated.
+
+## Phases 8–10: compliance, differentiators and regression
+
+PS_COMPLIANCE.md maps every problem-statement requirement and all five differentiators to source, UI, data dependencies, tests and limitations. Coordinated swarm dynamics and broader physical hardware qualification remain partial; VR, LAN synchronization, secure authentication and native packaging are not claimed. README.md and ARCHITECTURE.md describe the delivered four-module runtime.
+
+TEST_REPORT.md records the host, actual 1,000-session aggregation and 200-session native IndexedDB/browser measurements, software-rendered animation cadence, memory sampling limitations, build sizes and failures investigated. The performance browser exercise found and now covers paused final submission; paused assessment actions can complete without advancing time. Crew mode honors the existing low graphics render-scale cap.
+
+Verification checkpoint: strict build passed; 203 unit/component tests across 37 files passed in a clean one-worker run; all 16 production browser tests passed without retries or skips. An earlier parallel unit run stalled during component initialization and was interrupted; it is not represented as passed.

@@ -21,6 +21,14 @@ function startedEngine() {
 }
 
 describe('trainee workflow', () => {
+  it('completes the final assessment while paused without advancing time', () => {
+    const engine = startedEngine(); engine.pause(); const time = engine.simTime;
+    engine.acknowledgeContact('c1'); engine.setClassification('c1', 'smallMultirotor');
+    engine.setConfidence('c1', 'high'); engine.setProceduralResponse('c1', 'recordAndReport');
+    engine.submitAssessment('c1');
+    expect(engine.state).toBe('completed'); expect(engine.simTime).toBe(time);
+    expect(engine.log.byType('sessionCompleted')).toHaveLength(1);
+  });
   it('rejects actions before the session starts', () => {
     const engine = new SimulationEngine({
       scenario: SCENARIO_SINGLE_RECOGNITION,
