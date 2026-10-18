@@ -1,4 +1,5 @@
-﻿import { useMemo, useState } from 'react';
+import { longitudinalPatterns } from '../core/learning/longitudinal';
+import { useMemo, useState } from 'react';
 import { useUiStore } from '../store/uiStore';
 import { useTraineeLearning } from './useTraineeLearning';
 import { calculateSkillDNA, conditionsFor, type SkillCohort } from '../core/learning/skillDNA';
@@ -17,6 +18,7 @@ export function LearningScreen() {
   const [review,setReview]=useState<StoredSession|null>(null);
   const filtered=useMemo(()=>data.sessions.filter((s)=>{const c=conditionsFor(s);return (!from||s.summary.endedAt>=from)&&(condition==='all'||condition==='day'&&c.timeOfDay==='day'||condition==='night'&&c.timeOfDay==='night'||condition==='degraded'&&c.degraded||condition==='normal'&&!c.degraded||condition==='multi'&&c.multiContact||condition==='single'&&!c.multiContact);}),[data.sessions,condition,from]);
   const dna=useMemo(()=>data.profile?calculateSkillDNA(data.profile,filtered):null,[data.profile,filtered]);
+  const patterns=useMemo(()=>data.profile?longitudinalPatterns(data.profile,filtered):[],[data.profile,filtered]);
   const cohort=dna?.cohorts.find((c)=>c.key===cohortId)??dna?.cohorts[dna.cohorts.length-1];
   if(data.loading)return <p role="status" className="p-6">Loading learning history...</p>;
   return <main className="p-6 max-w-6xl mx-auto space-y-4"><header className="flex justify-between"><h2 className="text-2xl">Skill DNA</h2><button onClick={()=>useUiStore.getState().navigate('home')}>Home</button></header>
@@ -35,6 +37,7 @@ export function LearningScreen() {
         </details>)}</section>
         <section className="panel p-4"><h3>Day/night, normal/degraded and contact-count coverage</h3><p>Separate cohorts retain policy and condition differences; their scores are not pooled.</p>{dna!.cohorts.map((c)=><p key={c.key}>{c.label}: {c.sessionIds.length} sessions, classification {c.competencies.find((x)=>x.id==='classification')?.score?.toFixed(1)??'unassessed'}.</p>)}</section>
       </>}
+      <section className="panel p-4"><h3>Longitudinal blind-spot observations</h3>{patterns.length===0&&<p>Insufficient evidence for a pattern.</p>}{patterns.map((p)=><details key={p.cohortKey+p.patternId}><summary>{p.name}: {p.state}; {p.trend}</summary><p>{p.explanation}</p><p>First: {p.firstSession}; latest: {p.latestSession}; {p.applicableAssessments} applicable assessments. Objective: {p.objective}.</p><ul>{p.evidence.map((e)=><li key={e.sessionId+e.contactId}>{e.sessionId}/{e.contactId}</li>)}</ul></details>)}</section>
       {review&&<AssessmentDashboard key={review.summary.sessionId} session={review}/>}
     </>}
   </main>;

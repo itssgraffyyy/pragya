@@ -12,6 +12,8 @@ export interface BlindSpotPattern {
   patternName: string;
   strength: 'insufficientEvidence' | 'possiblePattern' | 'repeatedPattern';
   relevantObservations: number;
+  supportingObservations?: number;
+  observations?: { sessionId: string; contactId: string }[];
   sessionIds: string[];
   reliability: number;
   evidence: string[];
@@ -19,7 +21,7 @@ export interface BlindSpotPattern {
   recommendedObjective: string;
 }
 
-export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[] {
+export function detectBlindSpots(results: AssessmentResult[], options: { minimumObservations?: number } = {}): BlindSpotPattern[] {
   if (new Set(results.map((r) => r.traineeId)).size > 1) throw new Error('Blind-spot analysis requires a single trainee.');
   const c = flatten(results);
   const out: BlindSpotPattern[] = [];
@@ -33,6 +35,8 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
       patternName: 'Overconfidence',
       strength: strengthOf(hits.length),
       relevantObservations: hits.length,
+      supportingObservations: hits.length,
+      observations: hits.map((h) => ({ sessionId: h.sessionId, contactId: h.contactId })),
       sessionIds: [...new Set(hits.map((h) => h.sessionId))],
       reliability: ratio(hits.length, c.length),
       evidence: hits.slice(0, 5).map((h) => `${h.contactId} (${h.sessionId}): high-confidence incorrect`),
@@ -51,6 +55,8 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
       patternName: 'Underconfidence',
       strength: strengthOf(hits.length),
       relevantObservations: hits.length,
+      supportingObservations: hits.length,
+      observations: hits.map((h) => ({ sessionId: h.sessionId, contactId: h.contactId })),
       sessionIds: [...new Set(hits.map((h) => h.sessionId))],
       reliability: ratio(hits.length, c.length),
       evidence: hits.slice(0, 5).map((h) => `${h.contactId} (${h.sessionId}): low-confidence correct`),
@@ -69,6 +75,8 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
       patternName: 'Premature Conclusion',
       strength: strengthOf(hits.length),
       relevantObservations: hits.length,
+      supportingObservations: hits.length,
+      observations: hits.map((h) => ({ sessionId: h.sessionId, contactId: h.contactId })),
       sessionIds: [...new Set(hits.map((h) => h.sessionId))],
       reliability: ratio(hits.length, c.length),
       evidence: hits.slice(0, 5).map((h) => `${h.contactId}: missing ${h.missing.join(', ')}`),
@@ -89,6 +97,8 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
       patternName: 'Evidence Neglect',
       strength: strengthOf(hits.length),
       relevantObservations: hits.length,
+      supportingObservations: hits.length,
+      observations: hits.map((h) => ({ sessionId: h.sessionId, contactId: h.contactId })),
       sessionIds: [...new Set(hits.map((h) => h.sessionId))],
       reliability: ratio(hits.length, c.length),
       evidence: hits.slice(0, 5).map((h) => `${h.contactId}: evidence ${x2s(h.evidence)}`),
@@ -102,7 +112,8 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
   // 5. Uncertainty avoidance: confident errors where a justified Unknown existed.
   {
     const unknowns = c.filter((x) => x.allowsUnknown && x.outcome === 'acceptableUnknown').length;
-    const errors = c.filter((x) => x.allowsUnknown && x.confidence === 'high' && x.outcome === 'incorrect').length;
+    const errorCases = c.filter((x) => x.allowsUnknown && x.confidence === 'high' && x.outcome === 'incorrect');
+    const errors = errorCases.length;
     const relevant = unknowns + errors;
     const strength = relevant < 3 ? 'insufficientEvidence' : errors > unknowns ? 'possiblePattern' : 'insufficientEvidence';
     push({
@@ -110,6 +121,8 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
       patternName: 'Uncertainty Avoidance',
       strength,
       relevantObservations: relevant,
+      supportingObservations: errors,
+      observations: errorCases.map((h) => ({ sessionId: h.sessionId, contactId: h.contactId })),
       sessionIds: knownSessions(c),
       reliability: relevant === 0 ? 0 : ratio(errors, relevant),
       evidence: [`${errors} confident errors vs ${unknowns} justified unknowns`],
@@ -128,6 +141,8 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
       patternName: 'Delayed Recognition',
       strength: strengthOf(hits.length),
       relevantObservations: hits.length,
+      supportingObservations: hits.length,
+      observations: hits.map((h) => ({ sessionId: h.sessionId, contactId: h.contactId })),
       sessionIds: [...new Set(hits.map((h) => h.sessionId))],
       reliability: ratio(hits.length, c.length),
       evidence: hits.slice(0, 5).map((h) => `${h.contactId}: delay ${x2s(h.delay)}s`),
@@ -140,11 +155,12 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
 
   // 7. Information inconsistency: same submitted label with contradictory outcomes.
   {
-    const byLabel = new Map<string, { correct: number; total: number }>();
+    const byLabel = new Map<string, { correct: number; total: number; observations: FlatContact[] }>();
     for (const x of c) {
       if (!x.submitted || !x.context) continue;
-      const e = byLabel.get(x.submitted + ':' + x.context) ?? { correct: 0, total: 0 };
+      const e = byLabel.get(x.submitted + ':' + x.context) ?? { correct: 0, total: 0, observations: [] };
       e.total += 1;
+      e.observations.push(x);
       if (x.outcome === 'correct') e.correct += 1;
       byLabel.set(x.submitted + ':' + x.context, e);
     }
@@ -154,6 +170,7 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
       patternName: 'Information Inconsistency',
       strength: mixed.length > 0 ? 'possiblePattern' : 'insufficientEvidence',
       relevantObservations: mixed.reduce((s, [, e]) => s + e.total, 0),
+      observations: mixed.flatMap(([, e]) => e.observations.map((h) => ({ sessionId: h.sessionId, contactId: h.contactId }))),
       sessionIds: knownSessions(c),
       reliability: mixed.length > 0 ? 0.5 : 0,
       evidence: mixed.slice(0, 5).map(([label, e]) => `"${label}": ${e.correct}/${e.total} correct`),
@@ -164,7 +181,7 @@ export function detectBlindSpots(results: AssessmentResult[]): BlindSpotPattern[
     });
   }
 
-  return out.filter((p) => p.relevantObservations >= 3);
+  return out.filter((p) => p.relevantObservations >= (options.minimumObservations ?? 3));
 }
 
 function strengthOf(n: number): 'insufficientEvidence' | 'possiblePattern' | 'repeatedPattern' {
