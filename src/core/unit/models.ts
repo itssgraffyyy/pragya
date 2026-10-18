@@ -1,0 +1,21 @@
+﻿import { z } from 'zod';
+import { objectiveIdSchema } from '../learning/profile';
+const id = z.string().trim().min(1).max(120);
+const name = z.string().trim().min(1).max(100);
+const timestamp = z.string().datetime();
+export const roleSchema = z.enum(['trainee', 'instructor', 'commander']);
+export type Role = z.infer<typeof roleSchema>;
+export const userSchema = z.object({ schemaVersion:z.literal(1), id, name, traineeId:id.nullable(), archived:z.boolean(), createdAt:timestamp }).strict();
+export const unitSchema = z.object({ schemaVersion:z.literal(1), id, name, description:z.string().max(2000), archived:z.boolean(), createdAt:timestamp }).strict();
+export const membershipSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, userId:id, role:roleSchema, archived:z.boolean(), joinedAt:timestamp }).strict();
+export const instructorAssignmentSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, instructorId:id, traineeIds:z.array(id).max(1000), archived:z.boolean() }).strict();
+export const cohortSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, name, traineeIds:z.array(id).max(1000), archived:z.boolean() }).strict();
+export const ownershipSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, sessionId:id, traineeId:id, associatedBy:id, associatedAt:timestamp }).strict();
+export const assignmentSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, instructorId:id, traineeId:id, scenarioId:id, objectiveIds:z.array(objectiveIdSchema).max(30), createdAt:timestamp, dueAt:timestamp.nullable(), status:z.enum(['assigned','started','completed','cancelled']), sessionId:id.nullable(), policyKey:id.nullable() }).strict();
+export const annotationSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, authorId:id, traineeId:id, sessionId:id, createdAt:timestamp, text:z.string().trim().min(1).max(4000), objectiveIds:z.array(objectiveIdSchema).max(30) }).strict();
+export const trainingSchemas = { users:userSchema, units:unitSchema, memberships:membershipSchema, instructors:instructorAssignmentSchema, cohorts:cohortSchema, ownership:ownershipSchema, assignments:assignmentSchema, annotations:annotationSchema };
+export type TrainingKind = keyof typeof trainingSchemas;
+export type TrainingRecords = { [K in TrainingKind]: z.infer<(typeof trainingSchemas)[K]> };
+export type TrainingRecord = { [K in TrainingKind]: { kind:K; id:string; value:TrainingRecords[K] } }[TrainingKind];
+export type Permission = 'ownTraining'|'manageUnit'|'manageTraining'|'reviewTrainee'|'aggregate';
+export interface LocalActor { userId:string }

@@ -1,3 +1,4 @@
+import type { TrainingKind, TrainingRecord } from '../unit/models';
 import type { LearningPlan } from '../learning/plan';
 import type { TraineeProfile } from '../learning/profile';
 import type { AssessmentResult } from '../scoring/results';
@@ -41,6 +42,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
 
 export interface StorageAdapter {
   init(): Promise<void>;
+  listTrainingRecords(kind: TrainingKind): Promise<TrainingRecord[]>;
+  saveTrainingRecords(records: TrainingRecord[]): Promise<void>;
   // Scenarios
   listScenarios(): Promise<ScenarioDefinition[]>;
   getScenario(id: string): Promise<ScenarioDefinition | undefined>;

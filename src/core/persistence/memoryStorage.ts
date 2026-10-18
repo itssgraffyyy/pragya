@@ -1,3 +1,4 @@
+import type { TrainingKind, TrainingRecord } from '../unit/models';
 import type { LearningPlan } from '../learning/plan';
 import type { TraineeProfile } from '../learning/profile';
 /**
@@ -14,6 +15,9 @@ import {
 } from './storage';
 
 export class MemoryStorage implements StorageAdapter {
+  private training = new Map<string, TrainingRecord>();
+  async listTrainingRecords(kind:TrainingKind):Promise<TrainingRecord[]> { return structuredClone([...this.training.values()].filter(r=>r.kind===kind)); }
+  async saveTrainingRecords(records:TrainingRecord[]):Promise<void> { for(const r of records)this.training.set(r.kind+':'+r.id,structuredClone(r)); }
   private plans = new Map<string, LearningPlan>();
   private trainees = new Map<string, TraineeProfile>();
   private scenarios = new Map<string, ScenarioDefinition>();
@@ -77,6 +81,7 @@ export class MemoryStorage implements StorageAdapter {
   async saveLearningPlan(plan: LearningPlan): Promise<void> { this.plans.set(plan.traineeId, structuredClone(plan)); }
   async deleteLearningPlan(id: string): Promise<void> { this.plans.delete(id); }
   async clearAll(): Promise<void> {
+    this.training.clear();
     this.plans.clear();
     this.trainees.clear();
     this.scenarios.clear();

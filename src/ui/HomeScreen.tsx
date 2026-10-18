@@ -8,6 +8,7 @@ import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
 export function HomeScreen() {
   const navigate = useUiStore((s) => s.navigate);
   const cards: { title: string; subtitle: string; action: () => void }[] = [
+    { title: 'Units & Identities', subtitle: 'Local demo roles, membership and instructor scope', action: () => navigate('units') },
     { title: 'Personal Coach', subtitle: 'Offline explanations grounded in assessment evidence', action: () => navigate('coach') },
     { title: 'Learning Progress', subtitle: 'Before/after evidence and refresher planning', action: () => navigate('progress') },
     { title: 'Adaptive Training', subtitle: 'Personalized corrective exercises and explanations', action: () => navigate('adaptive') },

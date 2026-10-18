@@ -1,8 +1,9 @@
+import type { TrainingKind, TrainingRecord } from '../unit/models';
 import type { LearningPlan } from '../learning/plan';
 import type { TraineeProfile } from '../learning/profile';
 /**
  * IndexedDB storage adapter for the desktop app.
- * Database: pragya-local / version 1
+ * Database: pragya-local / version 4 (additive migrations)
  * Stores: scenarios (key: id), sessions (key: summary.sessionId), settings (key: 'app')
  */
 
@@ -11,7 +12,7 @@ import type { AppSettings, StorageAdapter, StoredSession } from './storage';
 import { DEFAULT_SETTINGS } from './storage';
 
 const DB_NAME = 'pragya-local';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const STORE_SCENARIOS = 'scenarios';
 const STORE_SESSIONS = 'sessions';
 const STORE_SETTINGS = 'settings';
@@ -35,6 +36,7 @@ export class IndexedDbStorage implements StorageAdapter {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onupgradeneeded = () => {
         const db = request.result;
+        if (!db.objectStoreNames.contains('training')) db.createObjectStore('training', {keyPath:['kind','id']});
         if (!db.objectStoreNames.contains('learningPlans')) db.createObjectStore('learningPlans', { keyPath: 'traineeId' });
         // v2 adds profiles without rewriting v1 scenario/session/settings records.
         if (!db.objectStoreNames.contains('trainees')) db.createObjectStore('trainees', { keyPath: 'id' });
@@ -101,6 +103,13 @@ export class IndexedDbStorage implements StorageAdapter {
     await promisifyRequest(this.tx(STORE_SETTINGS, 'readwrite').put(settings, SETTINGS_KEY));
   }
 
+  async listTrainingRecords(kind:TrainingKind):Promise<TrainingRecord[]> {
+    const all:TrainingRecord[]=await promisifyRequest(this.tx('training','readonly').getAll());return all.filter(r=>r.kind===kind);
+  }
+  async saveTrainingRecords(records:TrainingRecord[]):Promise<void> {
+    if(!this.db)throw new Error('Storage not initialized');
+    await new Promise<void>((resolve,reject)=>{ const tx=this.db!.transaction('training','readwrite');tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Training write aborted'));for(const r of records)tx.objectStore('training').put(r); });
+  }
   async listTrainees(): Promise<TraineeProfile[]> { return promisifyRequest(this.tx('trainees', 'readonly').getAll()); }
   async getTrainee(id: string): Promise<TraineeProfile | undefined> { return promisifyRequest(this.tx('trainees', 'readonly').get(id)); }
   async saveTrainee(profile: TraineeProfile): Promise<void> { await promisifyRequest(this.tx('trainees', 'readwrite').put(profile)); }
@@ -119,6 +128,7 @@ export class IndexedDbStorage implements StorageAdapter {
   async saveLearningPlan(plan: LearningPlan): Promise<void> { await promisifyRequest(this.tx('learningPlans', 'readwrite').put(plan)); }
   async deleteLearningPlan(id: string): Promise<void> { await promisifyRequest(this.tx('learningPlans', 'readwrite').delete(id)); }
   async clearAll(): Promise<void> {
+    await promisifyRequest(this.tx('training','readwrite').clear());
     await promisifyRequest(this.tx('learningPlans', 'readwrite').clear());
     await promisifyRequest(this.tx('trainees', 'readwrite').clear());
     await promisifyRequest(this.tx(STORE_SCENARIOS, 'readwrite').clear());

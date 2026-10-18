@@ -1,3 +1,5 @@
+import { RoleBoundary } from './ui/RoleBoundary';
+import { UnitManagementScreen } from './ui/UnitManagementScreen';
 import { CoachScreen } from './ui/CoachScreen';
 import { ProgressScreen } from './ui/ProgressScreen';
 import { AdaptiveTrainingScreen } from './ui/AdaptiveTrainingScreen';
@@ -68,6 +70,8 @@ export default function App() {
           Storage unavailable: {bootError} (running in-memory)
         </div>
       )}
+      <RoleBoundary screen={screen}>
+      {screen === 'units' && <UnitManagementScreen />}
       {screen === 'home' && <HomeScreen />}
       {screen === 'scenarios' && <ScenarioSelectionScreen />}
       {screen === 'generator' && <GeneratorScreen />}
@@ -81,6 +85,7 @@ export default function App() {
       {screen === 'adaptive' && <AdaptiveTrainingScreen />}
       {screen === 'progress' && <ProgressScreen />}
       {screen === 'coach' && <CoachScreen />}
+      </RoleBoundary>
     </div>
   );
 }

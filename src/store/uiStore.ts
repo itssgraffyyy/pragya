@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 
 export type Screen =
+  | 'units'
   | 'home'
   | 'scenarios'
   | 'generator'
