@@ -1,3 +1,4 @@
+import { WorkspaceIntro } from './WorkspacePrimitives';
 /**
  * Settings — graphics quality, accessibility, trainee profile.
  * Changes apply at runtime; low presets reduce render scale and effects.
@@ -11,7 +12,7 @@ export function SettingsScreen() {
   const s = useSettingsStore();
 
   return (
-    <div className="min-h-full p-6 max-w-2xl mx-auto">
+    <div className="institutional-workspace min-h-full p-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Settings</h2>
         <button onClick={() => navigate('home')} className="text-console-accent hover:underline">
@@ -19,7 +20,7 @@ export function SettingsScreen() {
         </button>
       </div>
 
-      <div className="panel p-4 flex flex-col gap-4">
+      <WorkspaceIntro eyebrow="WORKSPACE PREFERENCES">Choose a rendering budget for this device, then adjust readability and motion. Training records and scoring stay independent of graphics quality.</WorkspaceIntro><div className="panel p-4 flex flex-col gap-4"><h3>Profile and rendering</h3>
         <label className="text-sm">
           Trainee ID
           <input
@@ -33,6 +34,7 @@ export function SettingsScreen() {
         <label className="text-sm">
           Graphics preset
           <select
+            aria-label="Graphics preset"
             value={s.graphicsPreset}
             onChange={(e) => s.update({ graphicsPreset: e.target.value as 'low' | 'medium' | 'high' })}
             className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1"
@@ -58,7 +60,7 @@ export function SettingsScreen() {
           />
         </label>
 
-        <label className="text-sm">
+        <h3 className="settings-section-heading">Readability and motion</h3><label className="text-sm">
           Interface scale: {Math.round(s.interfaceScale * 100)}%
           <input
             type="range"
@@ -79,7 +81,7 @@ export function SettingsScreen() {
             onChange={(e) => s.update({ reducedMotion: e.target.checked })}
             data-testid="settings-reduced-motion"
           />
-          Reduced motion (disable camera damping and antialiasing)
+          Reduced motion (hold rotor/wing animation; disable camera damping and antialiasing)
         </label>
 
         <label className="flex items-center gap-2 text-sm">
