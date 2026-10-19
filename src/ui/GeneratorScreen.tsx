@@ -90,6 +90,7 @@ export function GeneratorScreen() {
         <label className="text-sm">
           Difficulty
           <select
+            aria-label="Difficulty"
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value as DifficultyTier | typeof EMPTY)}
             className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1"
@@ -103,6 +104,7 @@ export function GeneratorScreen() {
         <label className="text-sm">
           Environment
           <select
+            aria-label="Environment"
             value={environment}
             onChange={(e) => setEnvironment(e.target.value as EnvironmentPreset | typeof EMPTY)}
             className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1"
@@ -115,6 +117,7 @@ export function GeneratorScreen() {
         <label className="text-sm">
           Time of day
           <select
+            aria-label="Time of day"
             value={timeOfDay}
             onChange={(e) => setTimeOfDay(e.target.value as TimeOfDay | typeof EMPTY)}
             className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1"
@@ -128,6 +131,7 @@ export function GeneratorScreen() {
         <label className="text-sm">
           Visibility
           <select
+            aria-label="Visibility"
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as VisibilityCondition | typeof EMPTY)}
             className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1"
@@ -141,6 +145,7 @@ export function GeneratorScreen() {
         <label className="text-sm">
           Weather
           <select
+            aria-label="Weather"
             value={weather}
             onChange={(e) => setWeather(e.target.value as WeatherEffect | typeof EMPTY)}
             className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1"

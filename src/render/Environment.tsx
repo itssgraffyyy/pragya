@@ -1,128 +1,25 @@
-/**
- * Environment rendering: urban/rural presets, time-of-day lighting,
- * fog from visibility, rain particles. Purely fictional low-poly scenery.
- */
-
-import { useMemo } from 'react';
+﻿/** Presentation-only world: original deterministic geometry, materials and scenario-derived atmosphere. */
+import { useEffect,useMemo } from 'react';
 import * as THREE from 'three';
-import type { EnvironmentPreset, TimeOfDay, VisibilityCondition, WeatherEffect } from '../core/types';
-
-export interface EnvironmentProps {
-  environment: EnvironmentPreset;
-  timeOfDay: TimeOfDay;
-  visibility: VisibilityCondition;
-  weather: WeatherEffect;
-}
-
-const SKY_BY_TIME: Record<TimeOfDay, { sky: string; fog: string; hemi: number; dir: number; ambient: number }> = {
-  day: { sky: '#93b6d1', fog: '#93b6d1', hemi: 0.9, dir: 1.1, ambient: 0.35 },
-  dusk: { sky: '#5c5170', fog: '#5c5170', hemi: 0.55, dir: 0.6, ambient: 0.25 },
-  night: { sky: '#10161f', fog: '#10161f', hemi: 0.22, dir: 0.12, ambient: 0.12 },
-};
-
-const FOG_DENSITY: Record<VisibilityCondition, number> = {
-  clear: 0.0012,
-  lightFog: 0.006,
-  denseFog: 0.016,
-};
-
-/** Simple deterministic building layout for the urban preset. */
-function useUrbanBuildings(seed: number) {
-  return useMemo(() => {
-    const buildings: { x: number; z: number; w: number; d: number; h: number }[] = [];
-    let s = seed >>> 0 || 1;
-    const rand = () => {
-      s = (s + 0x6d2b79f5) >>> 0;
-      let t = s;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-    for (let i = 0; i < 26; i++) {
-      buildings.push({
-        x: -160 + rand() * 320,
-        z: -220 + rand() * 170,
-        w: 8 + rand() * 16,
-        d: 8 + rand() * 16,
-        h: 12 + rand() * 46,
-      });
-    }
-    return buildings;
-  }, [seed]);
-}
-
-export function Environment({ environment, timeOfDay, visibility, weather }: EnvironmentProps) {
-  const palette = SKY_BY_TIME[timeOfDay];
-  const fogDensity = FOG_DENSITY[visibility] * (weather === 'reducedContrast' ? 1.4 : 1);
-  const buildings = useUrbanBuildings(1234);
-
-  const fogColor = useMemo(() => new THREE.Color(palette.fog), [palette.fog]);
-  const rainCount = weather === 'rain' ? 900 : 0;
-  const rainPositions = useMemo(() => {
-    if (rainCount === 0) return null;
-    const arr = new Float32Array(rainCount * 3);
-    let s = 424242;
-    const rand = () => {
-      s = (s + 0x6d2b79f5) >>> 0;
-      return ((s ^ (s >>> 14)) >>> 0) / 4294967296;
-    };
-    for (let i = 0; i < rainCount; i++) {
-      arr[i * 3] = -200 + rand() * 400;
-      arr[i * 3 + 1] = rand() * 120;
-      arr[i * 3 + 2] = -250 + rand() * 320;
-    }
-    return arr;
-  }, [rainCount]);
-
-  return (
-    <>
-      <color attach="background" args={[palette.sky]} />
-      <fogExp2 attach="fog" args={[fogColor, fogDensity]} />
-      <hemisphereLight args={[palette.sky, '#2a2f28', palette.hemi]} />
-      <directionalLight position={[60, 120, 40]} intensity={palette.dir} />
-      <ambientLight intensity={palette.ambient} />
-
-      {/* Ground plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -60]} receiveShadow>
-        <planeGeometry args={[800, 800]} />
-        <meshStandardMaterial
-          color={environment === 'urban' ? '#3a3f47' : '#3c4a33'}
-          roughness={0.95}
-        />
-      </mesh>
-
-      {/* Urban buildings (axis-aligned boxes; no real-world geography) */}
-      {environment === 'urban' &&
-        buildings.map((b, i) => (
-          <mesh key={i} position={[b.x, b.h / 2, b.z]} castShadow receiveShadow>
-            <boxGeometry args={[b.w, b.h, b.d]} />
-            <meshStandardMaterial color={i % 3 === 0 ? '#4a525c' : '#3d444d'} roughness={0.9} />
-          </mesh>
-        ))}
-
-      {/* Rural tree stand (cones) */}
-      {environment === 'rural' &&
-        Array.from({ length: 18 }).map((_, i) => {
-          const x = -170 + ((i * 97) % 340);
-          const z = -210 + ((i * 61) % 160);
-          const h = 6 + (i % 5) * 2;
-          return (
-            <mesh key={i} position={[x, h / 2, z]} castShadow>
-              <coneGeometry args={[3 + (i % 3), h, 6]} />
-              <meshStandardMaterial color="#2f4030" roughness={1} />
-            </mesh>
-          );
-        })}
-
-      {/* Rain particles */}
-      {rainPositions && (
-        <points>
-          <bufferGeometry>
-            <bufferAttribute attach="attributes-position" args={[rainPositions, 3]} />
-          </bufferGeometry>
-          <pointsMaterial size={0.4} color="#9db8cf" transparent opacity={0.5} />
-        </points>
-      )}
-    </>
-  );
+import type { EnvironmentPreset,TimeOfDay,VisibilityCondition,WeatherEffect } from '../core/types';
+import { useSettingsStore } from '../store/settingsStore';
+import { UrbanDistrict } from './UrbanDistrict';
+import { RuralLandscape } from './RuralLandscape';
+export interface EnvironmentProps {environment:EnvironmentPreset;timeOfDay:TimeOfDay;visibility:VisibilityCondition;weather:WeatherEffect}
+const PALETTES={day:{sky:'#b1c5c9',fog:'#b1c5c9',sun:'#fff0d2',hemi:1.25,direct:2.1,ambient:.22},dusk:{sky:'#777b8b',fog:'#777b8b',sun:'#f2bc93',hemi:.65,direct:1.05,ambient:.17},night:{sky:'#172632',fog:'#172632',sun:'#a0bbd4',hemi:.35,direct:.32,ambient:.13}};
+const FOG={clear:.0012,lightFog:.006,denseFog:.016};
+export function Environment({environment,timeOfDay,visibility,weather}:EnvironmentProps){
+ const preset=useSettingsStore(s=>s.graphicsPreset),detail=preset==='low'?0:preset==='medium'?1:2,shadows=preset!=='low',palette=PALETTES[timeOfDay];
+ const surface=useMemo(()=>{const pixels=new Uint8Array(128*128*4);let state=137;for(let i=0;i<128*128;i++){state=(Math.imul(state,1664525)+1013904223)>>>0;const shade=170+(state%55);pixels.set([shade,shade,shade,255],i*4);}const texture=new THREE.DataTexture(pixels,128,128);texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(70,70);texture.colorSpace=THREE.SRGBColorSpace;texture.magFilter=THREE.LinearFilter;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.generateMipmaps=true;texture.needsUpdate=true;return texture;},[]);
+ useEffect(()=>{surface.needsUpdate=true;return()=>surface.dispose();},[surface]);
+ const terrain=useMemo(()=>{const geometry=new THREE.PlaneGeometry(1000,1000,48,48);geometry.rotateX(-Math.PI/2);const positions=geometry.attributes.position;for(let i=0;i<positions.count;i++){const x=positions.getX(i),z=positions.getZ(i),edge=Math.max(0,Math.min(1,(Math.abs(x)+Math.max(0,-z-160)-220)/130));positions.setY(i,edge*(10+Math.sin(x*.021)*7+Math.cos(z*.024)*9));}geometry.computeVertexNormals();return geometry;},[]);
+ useEffect(()=>()=>terrain.dispose(),[terrain]);
+ const rain=useMemo(()=>{if(weather!=='rain')return null;const count=preset==='low'?220:600,positions=new Float32Array(count*3);for(let i=0;i<count;i++){positions[i*3]=-220+(i*73)%440;positions[i*3+1]=(i*17)%120;positions[i*3+2]=-240+(i*53)%360;}return positions;},[weather,preset]);
+ const sky=useMemo(()=>{const geometry=new THREE.SphereGeometry(650,24,12),position=geometry.attributes.position,colors=new Float32Array(position.count*3),horizon=new THREE.Color(palette.sky),zenith=new THREE.Color(timeOfDay==='day'?'#6b97ae':timeOfDay==='dusk'?'#4c586e':'#091421');for(let i=0;i<position.count;i++){const color=horizon.clone().lerp(zenith,Math.pow(Math.max(0,position.getY(i)/650),.65));colors.set([color.r,color.g,color.b],i*3);}geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));return geometry;},[palette.sky,timeOfDay]);
+ useEffect(()=>()=>sky.dispose(),[sky]);
+ return <><mesh geometry={sky}><meshBasicMaterial vertexColors side={THREE.BackSide} fog={false} depthWrite={false}/></mesh><color attach="background" args={[palette.sky]}/><fogExp2 attach="fog" args={[palette.fog,FOG[visibility]*(weather==='reducedContrast'?1.4:1)]}/><hemisphereLight args={[palette.sky,'#4f5545',palette.hemi]}/><directionalLight position={timeOfDay==='night'?[-90,100,-100]:[90,130,30]} color={palette.sun} intensity={palette.direct} castShadow={shadows} shadow-mapSize={[preset==='high'?2048:1024,preset==='high'?2048:1024]} shadow-camera-left={-210} shadow-camera-right={210} shadow-camera-top={200} shadow-camera-bottom={-200} shadow-camera-far={550} shadow-bias={-.0005} shadow-normalBias={.12}/><ambientLight intensity={palette.ambient}/>
+ <mesh geometry={terrain} receiveShadow position={[0,-.08,0]}><meshStandardMaterial color={environment==='urban'?'#8b9186':'#889069'} map={surface} roughness={.98}/></mesh>
+ {environment==='urban'?<UrbanDistrict night={timeOfDay==='night'} detail={detail} shadows={shadows}/>:<RuralLandscape detail={detail} shadows={shadows}/>}
+ {rain&&<points><bufferGeometry><bufferAttribute attach="attributes-position" args={[rain,3]}/></bufferGeometry><pointsMaterial color="#b7c8d1" size={.25} transparent opacity={.45}/></points>}
+ </>;
 }

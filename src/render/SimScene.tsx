@@ -1,3 +1,5 @@
+import { useSettingsStore } from '../store/settingsStore';
+import { ACESFilmicToneMapping,SRGBColorSpace } from 'three';
 /**
  * Main 3D viewport: environment + contacts + orbit controls.
  * Renders from the trainee view only; no ground truth enters this tree.
@@ -27,14 +29,15 @@ export function SimScene({
   renderScale,
   reducedMotion,
 }: SimSceneProps) {
+  const preset=useSettingsStore(s=>s.graphicsPreset);
   const dpr = Math.min(window.devicePixelRatio * renderScale, 2);
   return (
     <Canvas
       dpr={dpr}
-      shadows
+      shadows={preset!=='low'}
       camera={{ position: [0, 55, 130], fov: 55, near: 0.5, far: 900 }}
       style={{ width: '100%', height: '100%' }}
-      gl={{ antialias: !reducedMotion, powerPreference: 'high-performance' }}
+      gl={{ antialias: preset!=='low'&&!reducedMotion, powerPreference: 'high-performance',toneMapping:ACESFilmicToneMapping,outputColorSpace:SRGBColorSpace }}
       data-testid="sim-canvas"
     >
       <Suspense fallback={null}>
