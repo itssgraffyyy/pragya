@@ -1,3 +1,4 @@
+import { AppShell } from './ui/AppShell';
 
 
 
@@ -85,7 +86,7 @@ export default function App() {
           Storage unavailable: {bootError} (running in-memory)
         </div>
       )}
-      <Suspense fallback={<p role="status">Loading training view…</p>}><RoleBoundary screen={screen}>
+      <AppShell><Suspense fallback={<p role="status">Loading training view…</p>}><RoleBoundary screen={screen}>
       {screen === 'demo' && <DemoScreen />}
       {screen === 'transfer' && <DataTransferScreen />}
       {screen === 'analytics' && <UnitAnalyticsScreen />}
@@ -105,7 +106,7 @@ export default function App() {
       {screen === 'adaptive' && <AdaptiveTrainingScreen />}
       {screen === 'progress' && <ProgressScreen />}
       {screen === 'coach' && <CoachScreen />}
-      </RoleBoundary></Suspense>
+      </RoleBoundary></Suspense></AppShell>
     </div>
   );
 }
