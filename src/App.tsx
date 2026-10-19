@@ -1,13 +1,13 @@
-import { DataTransferScreen } from './ui/DataTransferScreen';
-import { UnitAnalyticsScreen } from './ui/UnitAnalyticsScreen';
-import { InstructorScreen } from './ui/InstructorScreen';
+
+
+
 
 import { RoleBoundary } from './ui/RoleBoundary';
 import { UnitManagementScreen } from './ui/UnitManagementScreen';
 import { CoachScreen } from './ui/CoachScreen';
 import { ProgressScreen } from './ui/ProgressScreen';
 import { AdaptiveTrainingScreen } from './ui/AdaptiveTrainingScreen';
-import { LearningScreen } from './ui/LearningScreen';
+
 import { TraineeProfilesScreen } from './ui/TraineeProfilesScreen';
 /**
  * App shell — screen router + persistence hydration.
@@ -20,16 +20,22 @@ import { HomeScreen } from './ui/HomeScreen';
 import { ScenarioSelectionScreen } from './ui/ScenarioSelectionScreen';
 import { GeneratorScreen } from './ui/GeneratorScreen';
 
-import { SessionSummaryScreen } from './ui/SessionSummaryScreen';
+
 
 import { SettingsScreen } from './ui/SettingsScreen';
-import { HistoryScreen } from './ui/HistoryScreen';
+
 import { initStorage,getStorageWarning } from './core/persistence/appStorage';
 
 const InstructorEditorScreen=lazy(()=>import('./ui/InstructorEditorScreen').then(m=>({default:m.InstructorEditorScreen})));
 const DemoScreen=lazy(()=>import('./ui/DemoScreen').then(m=>({default:m.DemoScreen})));
 const CrewScreen=lazy(()=>import('./ui/CrewScreen').then(m=>({default:m.CrewScreen})));
 const SimulationConsoleScreen=lazy(()=>import('./ui/SimulationConsoleScreen').then(m=>({default:m.SimulationConsoleScreen})));
+const DataTransferScreen=lazy(()=>import('./ui/DataTransferScreen').then(m=>({default:m.DataTransferScreen})));
+const UnitAnalyticsScreen=lazy(()=>import('./ui/UnitAnalyticsScreen').then(m=>({default:m.UnitAnalyticsScreen})));
+const InstructorScreen=lazy(()=>import('./ui/InstructorScreen').then(m=>({default:m.InstructorScreen})));
+const SessionSummaryScreen=lazy(()=>import('./ui/SessionSummaryScreen').then(m=>({default:m.SessionSummaryScreen})));
+const HistoryScreen=lazy(()=>import('./ui/HistoryScreen').then(m=>({default:m.HistoryScreen})));
+const LearningScreen=lazy(()=>import('./ui/LearningScreen').then(m=>({default:m.LearningScreen})));
 export default function App() {
   const screen = useUiStore((s) => s.screen);
   const interfaceScale = useSettingsStore((s) => s.interfaceScale);

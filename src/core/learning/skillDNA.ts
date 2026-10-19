@@ -41,7 +41,7 @@ export function conditionsFor(s: StoredSession) {
   };
 }
 export function cohortKey(s: StoredSession): string {
-  return stableKey({ policyId:s.assessment?.policyId, policyVersion:s.assessment?.policyVersion, policy:s.scoringPolicy ?? ('snapshot-unavailable:'+s.summary.sessionId), conditions:conditionsFor(s),...(comparisonIdentity(s.summary.scenarioSnapshot)===null?{}:{qualification:{identity:comparisonIdentity(s.summary.scenarioSnapshot),contactCount:s.summary.scenarioSnapshot.contacts.length,referenceMode:s.summary.scenarioSnapshot.curriculum?.demand.reportDetail??'declared'}}) });
+  return stableKey({ policyId:s.assessment?.policyId, policyVersion:s.assessment?.policyVersion, policy:s.scoringPolicy ?? ('snapshot-unavailable:'+s.summary.sessionId), conditions:conditionsFor(s),...(comparisonIdentity(s.summary.scenarioSnapshot)===null?{}:{qualification:{identity:comparisonIdentity(s.summary.scenarioSnapshot),contactCount:s.summary.scenarioSnapshot.contacts.length,referenceMode:s.summary.scenarioSnapshot.trainingContract?.referenceMode??s.summary.scenarioSnapshot.curriculum?.demand.reportDetail??'declared'}}) });
 }
 export function measuredSessions(profile: TraineeProfile, sessions: StoredSession[]): StoredSession[] {
   return [...new Map(sessions.filter((s)=>validSession(s) && independentScenario(s.summary.scenarioSnapshot) && s.summary.status==='completed' && s.assessment && s.assessment.contacts.some((c)=>c.assessable) && (!s.summary.scenarioSnapshot.trainingContract||integrityForSession(s).competencies.some(c=>['eligible','partially_eligible'].includes(c.state))) &&

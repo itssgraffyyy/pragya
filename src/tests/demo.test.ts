@@ -1,3 +1,4 @@
+import { scenarioQuality } from '../core/assessGuard/quality';
 import { describe,it,expect } from 'vitest';
 import { IndexedDbStorage } from '../core/persistence/indexedDbStorage';
 import { MemoryStorage } from '../core/persistence/memoryStorage';
@@ -14,20 +15,23 @@ const now='2026-10-19T10:00:00.000Z';
 async function genuine(s:StorageAdapter){await s.saveTrainee(createProfile('Genuine trainee',now,'genuine'));await s.saveSession(learningSession('genuine-session','genuine'));const {unit,user}=await initializeLocalUnit(s,'Genuine commander','Genuine unit');return {unit,user};}
 
 describe('calculated synthetic demo and safe reset',()=>{
+ it('refuses to erase added or edited authored work in a demo-owned scenario',async()=>{const storage=new MemoryStorage();await installDemo(storage,null,now);const document=(await records(storage,'scenarioDocuments'))[0];await storage.saveTrainingRecords([{kind:'scenarioDocuments',id:document.id,value:{...document,draftText:document.draftText+' '}}]);const before=localDataFingerprint((await createLocalBackup(storage)).payload);await expect(previewDemoReset(storage)).rejects.toThrow('additional authored');expect(localDataFingerprint((await createLocalBackup(storage)).payload)).toBe(before);});
  it('records distinct histories, real corrected outcomes, assignments, crew messages and a valid transferable graph',async()=>{
   const s=new MemoryStorage();const existing=await genuine(s);const original=await createLocalBackup(s);const demo=await installDemo(s,null,now);
   expect((await s.getSession('genuine-session'))!.assessment).toEqual(original.payload.sessions[0].assessment);
   const a=await getLearningSnapshot(s,demo.traineeIds[0],new Date(Date.now()+86400000).toISOString());
   expect(a.progress.completedCorrectiveExercises).toBe(1);expect(a.exercises.filter(e=>e.status==='completed')).toHaveLength(2);
-  expect(a.recommendations.some(r=>r.competency==='calibration'&&r.status==='resolved')).toBe(true);
+  expect(a.recommendations.some(r=>r.competency==='classification'&&r.status==='resolved')).toBe(true);
   expect(a.progress.comparisons.some(c=>c.stage==='unseenEvaluation'&&c.comparable&&c.delta!==null&&c.delta>0)).toBe(true);
   const b=await getLearningSnapshot(s,demo.traineeIds[1],new Date(Date.now()+86400000).toISOString());expect(b.skillDNA.cohorts.some(c=>c.competencies.some(x=>x.id==='classification'&&x.state==='consistentStrength'))).toBe(true);
   expect((await getLearningSnapshot(s,demo.traineeIds[2],now)).nonSensitiveMetrics.completedSessions).toBe(0);
-  expect((await records(s,'assignments')).map(a=>a.status).sort()).toEqual(['assigned','completed']);
+  expect((await records(s,'assignments')).map(a=>a.status).sort()).toEqual(['assigned','completed','completed']);
   const crew=(await records(s,'crews'))[0];expect(crew.events.some(e=>e.kind==='flagUncertainty')).toBe(true);expect(crew.individualSessions[0].assessment!.categories.classification).toBe(0);expect(crew.jointSession!.assessment!.categories.classification).toBe(60);
+  const candidate=(await records(s,'curriculumCandidates'))[0];expect(candidate.status).toBe('assigned');expect(candidate.assignmentIds).toHaveLength(1);expect(a.exercises.every(e=>e.baselineSessionIds.every(id=>a.assessments.some(r=>r.sessionId===id)))).toBe(true);
+  const sources=await s.listSessions(),group=sources.find(x=>x.summary.sessionId.startsWith('demo-group-'))!,supported=sources.find(x=>x.summary.sessionId.startsWith('demo-evidence-supported'))!,guess=sources.find(x=>x.summary.sessionId.startsWith('demo-evidence-unsupported_guess'))!;expect(group.assessment!.groupAwareness!.groups[0].overall).toBe(100);expect(group.assessment!.integrity!.competencies.find(c=>c.competency==='multiContact')!.state).toBe('eligible');expect(supported.assessment!.categories.classification).toBe(guess.assessment!.categories.classification);expect(supported.assessment!.evidenceMind!.contacts[0].sufficiency).toBe('supported');expect(guess.assessment!.evidenceMind!.contacts[0].sufficiency).toBe('insufficient');const invalid=(await records(s,'scenarioDocuments')).find(d=>d.status==='draft')!;expect(scenarioQuality(JSON.parse(invalid.draftText),candidate.policy).status).toBe('invalid_for_declared_assessment');
   const backup=await createLocalBackup(s);const restored=new MemoryStorage();await restoreLocalBackup(restored,backup);expect((await records(restored,'demoManifests'))[0]).toEqual(demo);
   await expect(installDemo(s,null,now)).rejects.toThrow('already installed');await expect(previewDemoReset(s,{userId:existing.user.id})).rejects.toThrow('Unrestricted');
-  const preview=await previewDemoReset(s);expect(preview.counts.sessions).toBe(11);await resetDemo(s,preview);
+  const preview=await previewDemoReset(s);expect(preview.counts.sessions).toBe(14);await resetDemo(s,preview);
   expect(localDataFingerprint((await createLocalBackup(s)).payload)).toBe(localDataFingerprint(original.payload));
  });
  it('refuses external references and preserves every record',async()=>{

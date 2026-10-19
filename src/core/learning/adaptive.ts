@@ -50,7 +50,7 @@ export function generateAdaptiveExercise(profile:TraineeProfile,recommendation:L
       if(qualifiedMode){
         const policy=baseline?.scoringPolicy??defaultPolicyFor(scenario);
         scenario=declareAssessment(scenario,[...new Set([r.competency,'classification' as const,'evidence' as const])],stage==='practice'?'guided_practice':stage==='evaluation'?'unseen_evaluation':'retention_followup',policy);
-        const c=scenario.trainingContract!;c.comparisonKey=baselineScenario?comparisonIdentity(baselineScenario)!:JSON.stringify({objective:r.objective,version:'1.0.0',competency:r.competency});
+        const c=scenario.trainingContract!;c.referenceMode=baselineScenario?.trainingContract?.referenceMode??baselineScenario?.curriculum?.demand.reportDetail??'declared';c.comparisonKey=baselineScenario?comparisonIdentity(baselineScenario)!:JSON.stringify({objective:r.objective,version:'1.0.0',competency:r.competency});
         for(const b of c.competencies){const original=baselineScenario?.trainingContract?.competencies.find(x=>x.competency===b.competency);if(original)b.objectiveId=original.objectiveId;}
         if(stage!=='practice'){
           const featureKey=presentationFamily(scenario);if(priorFamilies.includes(featureKey))continue;

@@ -16,13 +16,15 @@ Keep the same hostname, port and browser profile to access the same IndexedDB re
 
 ## Training workflows
 
-- **Assessment integrity:** Instructor Editor → AssessGuard test bench → exact-version review/publication; instrumented text observations → per-competency eligibility in AAR and Skill DNA. Historical scores remain intact. See [Module 5](MODULE_5.md) for completed and pending phases.
+- **Assessment integrity:** Instructor Editor → AssessGuard test bench → exact-version review/publication; instrumented text observations → per-competency eligibility in AAR and Skill DNA. Historical scores remain intact. See [Module 5](MODULE_5.md) for contracts, validation and limits.
+- **CurriculumForge:** scoped instructor gap review ? editable objective versions/prerequisites ? bounded original-generator candidates ? AssessGuard review ? immutable publication/assignment ? separate availability, coached and independent coverage.
+- **EvidenceMind:** pre-decision synthetic observation references ? original rubric correctness plus separate evidence/uncertainty/reporting feedback ? explicit guided/independent/reserved-evaluation/follow-up stages ? qualified compatible progress. Practice is retained without entering independent Skill DNA.
 - **Individual:** select a trainee → scripted or seeded scenario → submit classification/confidence/evidence/response → explainable assessment and recorded-event replay.
 - **Personal learning:** Skill DNA and recurring patterns → evidence-based recommendation → tailored practice → unseen evaluation → comparable progress and refresher planning. Intelligence and coaching are deterministic offline rules, not a trained language model.
 - **Crew:** two profiles → one authoritative scenario/clock → separate individual commitments → structured evidence sharing and acknowledgments → confirmed joint report → individual and crew AAR. One local tab holds control; a saved paused prefix supports takeover.
 - **Instructor:** designated trainees/cohorts → original scenario editor and immutable policy versions → assignments → original outcomes, learning history and separately attributed feedback/follow-ups.
 - **Unit:** authorized summaries → condition/policy-separated heatmaps and coverage → cohort/period filters → supporting AAR with additional instructor scope → aggregate JSON/CSV.
-- **Synthetic demo:** Home → Synthetic Demo loads a separate labeled unit with calculated correction histories, assignments and crew AAR; previewed reset preserves genuine records. See DEMO_GUIDE.md.
+- **Synthetic demo:** Home → Synthetic Demo loads a separate labeled unit with a reviewed curriculum assignment, linked baseline/practice/reserved-evaluation history, group AAR, invalid-draft detection, supported-versus-unsupported judgment examples, and crew AAR; previewed reset preserves genuine records. See DEMO_GUIDE.md.
 - **Recovery:** validated local backups and portable records → checksum/ownership/conflict checks → atomic restoration without clearing training records.
 
 Create local units, identities, memberships, cohorts and instructor scopes in **Units & Identities**. An instructor needs explicit trainee scope; commander summary permission does not by itself expose raw decisions or replay. Unrestricted local demo is local-owner tooling.
@@ -36,10 +38,10 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests serve the production build and real offline service worker. They exercise actual local persistence and scoring services. See [test and performance report](TEST_REPORT.md), [PS compliance](PS_COMPLIANCE.md), [architecture](ARCHITECTURE.md), [Module 4](MODULE_4.md), [Module 3](MODULE_3.md) and [Module 2](docs/MODULE_2.md). Demonstration instructions are in [DEMO_GUIDE.md](DEMO_GUIDE.md).
+Browser tests serve the production build and real offline service worker. They exercise actual local persistence and scoring services. See [test and performance report](TEST_REPORT.md), [PS compliance](PS_COMPLIANCE.md), [architecture](ARCHITECTURE.md), [Module 5](MODULE_5.md), [research alignment](RESEARCH_ALIGNMENT.md), [Module 4](MODULE_4.md), [Module 3](MODULE_3.md) and [Module 2](docs/MODULE_2.md). Demonstration instructions are in [DEMO_GUIDE.md](DEMO_GUIDE.md).
 
 ## Explicit limits
 
 Local identity selection is **not secure authentication**. A person with the browser/OS profile or developer tools can inspect or alter local records. Use separate OS/browser profiles and host filesystem protections for private local operation. Backups contain private records; SHA-256 is a corruption check, not encryption or a signature.
 
-Duo Mode is single-laptop training. Closed-LAN synchronization, a packaged desktop executable and VR are not implemented. Bounded synthetic group formations support educational group awareness; validated physical swarm dynamics are not implemented. Synthetic sensors and internal simulator learning metrics are not validated real-world sensing or operational readiness measures. Hardware observations apply only to the tested host; consult TEST_REPORT.md before making broader claims.
+Duo Mode is single-laptop training. Closed-LAN synchronization, a packaged desktop executable and VR are not implemented. Bounded synthetic group formations support educational group awareness; validated physical swarm dynamics are not implemented. Synthetic sensors and internal simulator learning metrics are not validated real-world sensing or operational readiness measures. Reserved answer/evidence variants reduce recorded answer-family leakage; they do not certify human unfamiliarity. Missing reliable inputs and incompatible/sparse evaluations do not produce a new competency deficit or improvement claim. Hardware observations apply only to the tested host; consult TEST_REPORT.md before making broader claims.

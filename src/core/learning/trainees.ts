@@ -1,3 +1,4 @@
+import { assertLearningPlanSources } from './planIntegrity';
 import { records } from '../unit/service';
 import { serializeLearning } from './queue';
 import { stableKey } from './skillDNA';
@@ -48,7 +49,7 @@ export async function importTrainee(storage: StorageAdapter, value: unknown): Pr
   if(bundle.plan && (bundle.plan.traineeId !== bundle.profile.id || bundle.plan.recommendations.some((r)=>r.traineeId!==bundle.profile.id) || bundle.plan.exercises.some((e)=>e.traineeId!==bundle.profile.id)))throw new Error('Foreign learning plan in import');
   const existingProfiles = await storage.listTrainees();
   if (await storage.getTrainee(bundle.profile.id)) throw new Error('Profile ID already exists; import cannot overwrite it');
-  const sessions = bundle.sessions as StoredSession[];
+  const sessions = bundle.sessions as StoredSession[];if(bundle.plan)assertLearningPlanSources(bundle.profile,bundle.plan,sessions);
   for (const s of sessions) {
     if (s.summary.traineeId !== bundle.profile.id && !bundle.profile.legacySessionIds.includes(s.summary.sessionId)) throw new Error('Foreign trainee session in import');
     if (existingProfiles.some((p) => p.id === s.summary.traineeId || p.legacySessionIds.includes(s.summary.sessionId))) throw new Error('Session owned by another local profile');

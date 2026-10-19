@@ -1,3 +1,11 @@
+import { stableKey } from '../learning/skillDNA';
+import { initializeCatalogue,approveObjectiveVersion } from '../curriculum/objectiveService';
+import { createCurriculumCandidate,approveAndPublishCandidate,assignCurriculumCandidate } from '../curriculum/service';
+import { DEFAULT_LEARNING_DEMAND } from '../curriculum/generation';
+import { GROUP_EXAMPLES } from '../scenario/bundled/scenariosGroup';
+import { defaultPolicyFor } from '../scoring/defaultPolicy';
+import { controlledSession } from '../assessGuard/testBench';
+import { saveScenarioDocument } from '../instructor/service';
 import { declareAssessment } from '../assessGuard/declare';
 import { MemoryStorage } from '../persistence/memoryStorage';
 import type { LocalActor } from '../unit/models';
@@ -29,9 +37,20 @@ export async function installDemo(storage:StorageAdapter,actor:LocalActor|null=n
  await manageUnit(scratch,owner,'instructors',{schemaVersion:1,id:crypto.randomUUID(),unitId:unit.id,instructorId:teacher.id,traineeIds:profiles.map(p=>p.id),archived:false});
  await manageUnit(scratch,owner,'cohorts',{schemaVersion:1,id:crypto.randomUUID(),unitId:unit.id,name:'[Synthetic demo] Foundation cohort',traineeIds:profiles.map(p=>p.id),archived:false});
  async function save(session:ReturnType<typeof demoSession>){await scratch.saveSession(session);await recordProfileSession(scratch,session);await associateSession(scratch,instructor,unit.id,session.summary.sessionId,session.summary.traineeId);}
- for(let day=12;day>=10;day--)for(let i=0;i<2;i++)await save(demoSession(declareAssessment(SCENARIO_SINGLE_RECOGNITION,['classification','evidence','calibration']),profiles[i].id,`demo-session-${crypto.randomUUID()}`,i===1,at(day)));
- const plan=await refreshRecommendations(scratch,(await scratch.getTrainee(profiles[0].id))!,at(9));const rec=plan.recommendations.find(r=>r.competency==='calibration');if(!rec)throw new Error('Synthetic baseline did not produce the expected measured recommendation.');
+ const catalogue=await initializeCatalogue(scratch,instructor,unit.id),objective=catalogue.find(o=>o.definition.objectiveId==='category-discrimination')!;
+ const rationale='[Synthetic demo] Instructor reviewed the synthetic observations, declared recognition objective and illustrative response rubric.';
+ await approveObjectiveVersion(scratch,instructor,objective.id,rationale);
+ const candidate=await createCurriculumCandidate(scratch,instructor,unit.id,{objectiveKey:objective.id,traineeIds:[profiles[0].id],seed:505,demand:DEFAULT_LEARNING_DEMAND,maxAttempts:8});
+ await approveAndPublishCandidate(scratch,instructor,candidate.id,rationale);
+ const [baselineAssignment]=await assignCurriculumCandidate(scratch,instructor,candidate.id);
+ const baselineStarted=await startAssignment(scratch,{userId:users[0].id},baselineAssignment.id);
+ for(let day=12;day>=10;day--)for(let i=0;i<2;i++){const session=demoSession(i===0?candidate.scenarioSnapshot:SCENARIO_SINGLE_RECOGNITION,profiles[i].id,i===0&&day===12?baselineStarted.sessionId!:`demo-session-${crypto.randomUUID()}`,i===1,at(day),i===0?candidate.policy:undefined);await save(session);if(i===0&&day===12)await reconcileAssignment(scratch,baselineAssignment.id,session);}
+ const plan=await refreshRecommendations(scratch,(await scratch.getTrainee(profiles[0].id))!,at(9));const rec=plan.recommendations.find(r=>r.competency==='classification');if(!rec)throw new Error('Synthetic baseline did not produce the expected measured recommendation.');
  for(const [stage,days] of [['practice',8],['evaluation',7]] as const){const exercise=await prepareExercise(scratch,profiles[0].id,rec.id,stage,at(days));const id=`demo-session-${crypto.randomUUID()}`;await assignExerciseSession(scratch,profiles[0].id,exercise.id,id);const session=demoSession(exercise.scenario,profiles[0].id,id,true,at(days),exercise.policySnapshot);await save(session);await reconcileLearningSession(scratch,session);}
+ const group=declareAssessment(GROUP_EXAMPLES[2],['classification','evidence','multiContact']);const groupBlueprint=group.trainingContract!.competencies.find(b=>b.competency==='multiContact')!;groupBlueprint.objectiveId='synthetic-group-awareness';groupBlueprint.eligibility.minimumIndependentResponses=3;
+ const groupSession=controlledSession(group,defaultPolicyFor(group),'supported',profiles[0].id,`demo-group-${crypto.randomUUID()}`);groupSession.summary.startedAt=at(5);groupSession.summary.endedAt=new Date(Date.parse(at(5))+groupSession.summary.durationSimSeconds*1000).toISOString();groupSession.assessment!.calculatedAt=groupSession.summary.endedAt;await save(groupSession);
+ for(const participant of ['supported','unsupported_guess'] as const){const session=controlledSession(candidate.scenarioSnapshot,candidate.policy,participant,profiles[0].id,`demo-evidence-${participant}-${crypto.randomUUID()}`);session.summary.startedAt=at(4);session.summary.endedAt=new Date(Date.parse(at(4))+session.summary.durationSimSeconds*1000).toISOString();session.assessment!.calculatedAt=session.summary.endedAt;await save(session);}
+ const invalid=structuredClone(candidate.scenarioSnapshot);delete invalid.curriculum;invalid.id=`demo-invalid-${unit.id}`;invalid.title='[Synthetic demo] Invalid observation reference';invalid.trainingContract!.competencies[0].requiredOpportunityIds=['missing-observation'];await saveScenarioDocument(scratch,instructor,unit.id,JSON.stringify(invalid),'draft');
  const input={traineeIds:[profiles[1].id],scenarioId:SCENARIO_SINGLE_RECOGNITION.id,objectiveIds:['basic-recognition'],dueAt:null,policyKey:null};const [assignment]=await assignTraining(scratch,instructor,unit.id,input);const started=await startAssignment(scratch,{userId:users[1].id},assignment.id);const assigned=demoSession(started.scenarioSnapshot,profiles[1].id,started.sessionId!,true,at(2),started.policy);await scratch.saveSession(assigned);await recordProfileSession(scratch,assigned);await reconcileAssignment(scratch,assignment.id,assigned);
  await addInstructorNote(scratch,instructor,unit.id,profiles[1].id,assigned.summary.sessionId,'[Synthetic demo] Recorded evidence supports the selected recognition response. Broaden conditions before drawing readiness conclusions.',['basic-recognition']);
  await assignTraining(scratch,instructor,unit.id,{...input,traineeIds:[profiles[2].id],dueAt:new Date(time+7*86400000).toISOString()});
@@ -44,7 +63,7 @@ export async function installDemo(storage:StorageAdapter,actor:LocalActor|null=n
  for(const p of participants){const share=crew.communicate(p.traineeId,'shareObservation','c1',['absenceOfFeatures']);crew.communicate(p.traineeId===a?b:a,'acknowledgeInformation','c1',[],share.id);}
  const report=crew.communicate(b,'sendProceduralReport','c1',[],undefined,decision);crew.communicate(a,'confirmReceipt','c1',[],report.id);crew.complete(a);await persistCrew(scratch,crew);
  await annotateCrew(scratch,instructor,crew.snapshot().id,'[Synthetic demo] Private initial error retained; confirmed joint report acknowledges ambiguity. Coordination and recognition accuracy are separate.',['conflicting-sources']);
- const manifest=trainingSchemas.demoManifests.parse({schemaVersion:1,id:DEMO_ID,unitId:unit.id,userIds:[commander.id,teacher.id,...users.map(u=>u.id)],traineeIds:profiles.map(p=>p.id),createdAt:now,label:'Synthetic demo — calculated outcomes, scripted decisions and calendar dates'});
+ const authored=(await scratch.listTrainingRecords('scenarioDocuments')).concat(await scratch.listTrainingRecords('scenarioVersions'));const manifest=trainingSchemas.demoManifests.parse({schemaVersion:1,id:DEMO_ID,scenarioIds:[candidate.scenarioSnapshot.id],authoredSnapshot:stableKey([...authored].sort((a,b)=>(a.kind+':'+a.id).localeCompare(b.kind+':'+b.id))),unitId:unit.id,userIds:[commander.id,teacher.id,...users.map(u=>u.id)],traineeIds:profiles.map(p=>p.id),createdAt:now,label:'Synthetic demo — calculated outcomes, scripted decisions and calendar dates'});
  await writeRecord(scratch,'demoManifests',manifest,true);const backup=await createLocalBackup(scratch);await restoreLocalBackup(storage,backup,actor);return manifest;
 }
 
@@ -64,11 +83,11 @@ export async function previewDemoReset(storage:StorageAdapter,actor:LocalActor|n
  const demo=manifest.value,users=new Set(demo.userIds),trainees=new Set(demo.traineeIds);
  if(expected.training.some(r=>r.kind==='memberships'&&r.value.unitId===demo.unitId&&!users.has(r.value.userId)))throw new Error('Demo unit contains an additional identity; preserve or move that work before resetting.');
  const training=expected.training.filter(r=>r.kind==='demoManifests'&&r.id===DEMO_ID||r.kind==='units'&&r.id===demo.unitId||r.kind==='users'&&users.has(r.id)||'unitId' in r.value&&r.value.unitId===demo.unitId);
- if(training.some(r=>r.kind==='scenarioDocuments'||r.kind==='scenarioVersions'))throw new Error('Demo unit has additional authored scenarios; export and move them before resetting.');
+ const authored=training.filter(r=>r.kind==='scenarioDocuments'||r.kind==='scenarioVersions');if(authored.length&&stableKey([...authored].sort((a,b)=>(a.kind+':'+a.id).localeCompare(b.kind+':'+b.id)))!==demo.authoredSnapshot)throw new Error('Demo unit has additional authored scenarios; export and move them before resetting.');
  const sessions=expected.sessions.filter(s=>trainees.has(s.summary.traineeId));const plans=expected.plans.filter(p=>trainees.has(p.traineeId));
- const remove:LocalDeletion={scenarios:[],sessions:sessions.map(s=>s.summary.sessionId),trainees:[...trainees],plans:plans.map(p=>p.traineeId),training:training.map(r=>[r.kind,r.id])};
- const keys=new Set(training.map(r=>r.kind+':'+r.id));const kept:LocalDataBundle={scenarios:expected.scenarios,sessions:expected.sessions.filter(s=>!remove.sessions.includes(s.summary.sessionId)),trainees:expected.trainees.filter(p=>!trainees.has(p.id)),plans:expected.plans.filter(p=>!trainees.has(p.traineeId)),training:expected.training.filter(r=>!keys.has(r.kind+':'+r.id))};
- const ids=new Set([demo.unitId,...demo.userIds,...demo.traineeIds,...remove.sessions,...training.map(r=>r.id)]);
+ const remove:LocalDeletion={scenarios:demo.scenarioIds??[],sessions:sessions.map(s=>s.summary.sessionId),trainees:[...trainees],plans:plans.map(p=>p.traineeId),training:training.map(r=>[r.kind,r.id])};
+ const keys=new Set(training.map(r=>r.kind+':'+r.id));const kept:LocalDataBundle={scenarios:expected.scenarios.filter(s=>!remove.scenarios.includes(s.id)),sessions:expected.sessions.filter(s=>!remove.sessions.includes(s.summary.sessionId)),trainees:expected.trainees.filter(p=>!trainees.has(p.id)),plans:expected.plans.filter(p=>!trainees.has(p.traineeId)),training:expected.training.filter(r=>!keys.has(r.kind+':'+r.id))};
+ const ids=new Set([demo.unitId,...demo.userIds,...demo.traineeIds,...remove.sessions,...remove.scenarios,...training.map(r=>r.id)]);
  if(references(kept,ids))throw new Error('Other records reference this demo. Reset refused; all local work preserved.');
  assertGraph(kept);
  return {expected,remove,unitId:demo.unitId,crewIds:training.flatMap(r=>r.kind==='crews'?[r.id]:[]),counts:{profiles:remove.trainees.length,sessions:remove.sessions.length,plans:remove.plans.length,trainingRecords:remove.training.length}};

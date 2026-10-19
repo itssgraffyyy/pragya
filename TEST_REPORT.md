@@ -89,3 +89,63 @@ Module 5 Phase 2: strict build passed; **242 unit/component tests across 41 file
 Module 5 Phase 3 development checks: first full unit/component checkpoint 258 passed across 42 files. Stronger browser assertions then exposed generated required-evidence combinations that the existing canonical scorer marks contradictory (absenceOfFeatures plus other evidence). The targeted browser run finished 8 passed / 2 failed (3.2 minutes, failed retries included). AssessGuard now blocks that known answer-key defect and bounded generation chooses another candidate; the original scorer and old stored scores are unchanged. A separate test-read race was fixed by awaiting the ready console before reading the newly saved exercise. The subsequent full unit checkpoint passed **260 tests / 42 files (69.36 s)**, followed by 44 focused stage/integrity/demo and 28 focused evidence/progress/unit-report passes after final sparse-history gates. TypeScript initially found obsolete preview-profile imports, removed before the successful build. Full browser gate follows.
 
 Module 5 Phase 3 final browser gate: **22 passed in 2.8 minutes**, zero retries/failures/skips. Explicit stages, practice guidance, independent hint exclusion, actual pre-decision references, preserved correct-answer credit, reserved evaluation, qualified 100-point scripted fixture delta, practice non-comparability and offline reload are asserted. Full unit checkpoint 260/42 and subsequent focused checks are recorded above. Entry 520.61 KB/147.62 KB gzip and 3D 836.75 KB/225.39 KB retain advisories for Phase 4 investigation. Software-rendered single/crew cadence 35.65/60 frames/s, p95 50/16.8 ms; pause 507.37 ms; approximate heap 15 MB. Legacy 200-session native validation/restore/navigation 1405/541/1231 ms; new qualified/group dataset measurements remain Phase 4 work.
+
+## Module 5 Phase 4 final verification
+
+Commands executed against the local workspace:
+
+```sh
+npm.cmd run build
+npm.cmd test -- --maxWorkers=1 --minWorkers=1
+npm.cmd run test:e2e
+```
+
+Strict TypeScript/Vite build passed. Full unit/component regression: **278 passed across 44 files (108.05 s)**; no failed/skipped checks. Coverage includes the fourteen-case adversarial pack, original Modules 1–4, integrated curriculum-derived demo, edited-demo preservation, memory/native IndexedDB reset, and shared profile/backup stage/reservation/completed-snapshot checks. One initial adversarial assertion used a nonexistent `eventLog` property; it was corrected to the original engine's public `log` and the focused/full reruns passed. Intermediate typechecks identified a misnamed catalogue function and obsolete preview imports, corrected before the successful build. No test was disabled or scoring assertion weakened.
+
+The continuous demo now contains a real approved/published curriculum candidate and assignment, three saved baseline attempts, guided practice, reserved evaluation, group reports, supported/unsupported correct decisions, a deliberately defective saved draft, existing crew outcomes and explicit unit ownership. A saved reference mode propagates curriculum reporting conditions into adaptive comparisons. Demo reset compares the original authored-document snapshot and refuses later edits/additions; genuine data remain intact. Shared portable-plan validation rejects foreign reservation sources, stage relabeling and changed completed scenario/policy snapshots before mutation.
+
+Bundle investigation: lazy-loading secondary instructor, review, transfer and analytics workspaces reduced the entry from Phase 3's **520.61 KB / 147.62 KB gzip** to **449.38 KB / 128.08 KB gzip**. Shared 3D remains **836.75 KB / 225.39 KB gzip** with a size advisory. The service worker includes lazy assets for prepared offline use; the advisory was not hidden with a larger threshold.
+
+Core host measurements, original-engine synthetic corpora:
+
+| Dataset | Aggregation trials | Median | Worker RSS |
+|---|---|---|---|
+| 1000 legacy assessments, 10 trainees | 3982.91 / 3288.61 / 1899.88 ms | 3288.61 ms | 200 MB |
+| 200 declared assessments, including 40 group reports, 5 trainees | 1185.01 / 1105.39 / 1102.50 ms | 1105.39 ms | 230 MB |
+
+The second corpus exercises opportunity/eligibility/evidence/group data; it is not a legacy-only extrapolation. Memory is a Node worker sample, not a whole-laptop RAM requirement. Source corpus calendar dates and participants are explicitly synthetic.
+
+Browser environment remains headless Chromium 156 on Windows, ANGLE Vulkan SwiftShader software rendering, eight reported logical cores, low graphics/reduced motion. Short animation-frame samples do not certify physical GPU/display throughput, field sensing or laptop-fleet performance. Prepared app startup/reload behavior is exercised throughout; no universal cold-start latency is claimed.
+
+Browser final gate and live/native measurements follow below.
+
+Final production browser gate: **26 passed in 4.6 minutes**, zero failures, retries or skips. The independent multi-contact performance test waits for the scenario's actual 60-second contact spawn before sampling; the longer run is intentional, not a relaxed application timeout. Journeys exercise actual UI, canonical engine/scorer, native persistence, saved profile/unit records and prepared offline resources.
+
+| Required journey | Actual browser evidence |
+|---|---|
+| A — Standard PS exercise | Original `user-journey.spec.ts`: selection, detection/classification/report, completion and saved AAR |
+| B — Group awareness | `module5.spec.ts`: changing group cue, attributable references/report, separate score, canonical replay and offline reload |
+| C — Invalid assessment | `module5.spec.ts`: known missing observation, quality explanation and publication prevention; demo saved invalid draft |
+| D — Curriculum | Instructor form edits/approves objective version, generates/reviews/publishes/assigns, reloads offline, completes and reviews the actual saved assignment |
+| E — Evidence judgment | Supported/unsupported saved demo comparison and staged-loop source assertions; actual pre-decision observation events and separate correctness/evidence feedback |
+| F — Adaptive learning | Qualified baseline?guided practice?reserved evaluation?compatible progress?offline reload; explicit stages/hints, no practice delta |
+| G — Historical compatibility | Offline legacy profile import?unknown-metadata AAR?original-score/event export equality?reload; no opportunity backfill |
+| H — Existing Module 4 | Scoped identities/instructor assignments/unit heatmap, real duo messages/AAR, complete backup restore/conflicts, two-tab host takeover, original demo preservation/reset |
+
+Latest live animation/resource samples (same software-rendered host):
+
+| Scene | Animation cadence | p95 frame interval | Approximate Chromium JS heap |
+|---|---|---|---|
+| Original single contact | 34.95 frames/s | 50.0 ms | 13 MB |
+| Existing duo crew | 60.01 frames/s | 16.8 ms | 13 MB |
+| Independent multiple contacts, after actual overlapping spawn | 45.28 frames/s | 33.4 ms | 17 MB |
+| Coordinated three-contact group | 60.00 frames/s | 16.7 ms | 13 MB |
+
+Single-scene pause UI response measured **338.84 ms**. Multi/group preparation navigation measured **999 / 1280 ms**, including scenario/settings navigation; these are not isolated cold-start measurements. Native IndexedDB samples:
+
+| Corpus | JSON bytes | Validate UI | Restore UI | Unit analytics navigation | Exact persisted count |
+|---|---|---|---|---|---|
+| Legacy, 5 trainees | 1833958 | 1089 ms | 410 ms | 1358 ms | 200 |
+| Declared evidence histories including 20 group reports, 5 trainees | 1825002 | 500 ms | 199 ms | 654 ms | 100 |
+
+All values are observations, not performance guarantees. The earlier failed/intermediate runs remain documented above. No unresolved functional blocker was found in the final tested scope. Physical sensing/swarm fidelity, fleet hardware qualification, VR, native packaging, LAN synchronization, secure authentication and empirical educational effectiveness remain outside the delivered evidence. Optional AI advice was not added.
