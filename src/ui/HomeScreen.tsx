@@ -1,78 +1,31 @@
-import { OfflineStatus } from './OfflineStatus';
-/**
- * Home screen — entry point.
- */
-
-import { useUiStore } from '../store/uiStore';
-import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
-
-export function HomeScreen() {
-  const navigate = useUiStore((s) => s.navigate);
-  const cards: { title: string; subtitle: string; action: () => void }[] = [
-    { title: 'Synthetic Demo', subtitle: 'Calculated sample histories, guided walkthrough and guarded reset', action: () => navigate('demo') },
-    { title: 'Backups & Transfer', subtitle: 'Validated offline backup, recovery and portable training records', action: () => navigate('transfer') },
-    { title: 'Unit Intelligence', subtitle: 'Evidence-based competency heatmaps and training coverage', action: () => navigate('analytics') },
-    { title: 'Instructor & Assignments', subtitle: 'Scenario control, policy versions, assigned exercises and reviews', action: () => navigate('instructor') },
-    { title: 'Duo Crew Mode', subtitle: 'One shared scenario, structured communication and crew review', action: () => navigate('crew') },
-    { title: 'Units & Identities', subtitle: 'Local demo roles, membership and instructor scope', action: () => navigate('units') },
-    { title: 'Personal Coach', subtitle: 'Offline explanations grounded in assessment evidence', action: () => navigate('coach') },
-    { title: 'Learning Progress', subtitle: 'Before/after evidence and refresher planning', action: () => navigate('progress') },
-    { title: 'Adaptive Training', subtitle: 'Personalized corrective exercises and explanations', action: () => navigate('adaptive') },
-    { title: 'Skill DNA', subtitle: 'Evidence, competencies and comparable trends', action: () => navigate('learning') },
-    { title: 'Trainee Profiles', subtitle: 'Local profiles and individual assessment history', action: () => navigate('trainees') },
-    {
-      title: 'Scenario Selection',
-      subtitle: `${BUNDLED_SCENARIOS.length} scripted scenarios + procedural generator`,
-      action: () => navigate('scenarios'),
-    },
-    {
-      title: 'Generate Scenario',
-      subtitle: 'Deterministic seeded procedural generation',
-      action: () => navigate('generator'),
-    },
-    {
-      title: 'Instructor Editor',
-      subtitle: 'Author, validate, import and export scenarios',
-      action: () => navigate('editor'),
-    },
-    {
-      title: 'Session History',
-      subtitle: 'Review saved results and re-export logs',
-      action: () => navigate('history'),
-    },
-    {
-      title: 'Settings',
-      subtitle: 'Graphics, accessibility and trainee profile',
-      action: () => navigate('settings'),
-    },
-  ];
-
-  return (
-    <div className="min-h-full flex flex-col items-center justify-center gap-8 p-8">
-      <div className="text-center"><OfflineStatus/>
-        <h1 className="text-4xl font-bold tracking-wide text-console-accent">PRAGYA</h1>
-        <p className="mt-2 text-console-muted max-w-xl">
-          Personalized Readiness &amp; Adaptive Guidance for Aerial Threat Awareness —
-          an offline-first recognition training simulator.
-        </p>
-        <p className="mt-1 text-xs text-console-muted">
-          Simulation · assessment · personalized learning · crew and unit review — training content only; no real-world
-          targeting, jamming or counter-drone tactics.
-        </p>
-      </div>
-      <div className="grid gap-4 w-full max-w-3xl sm:grid-cols-2">
-        {cards.map((c) => (
-          <button
-            key={c.title}
-            onClick={c.action}
-            className="panel p-4 text-left hover:border-console-accent transition-colors"
-            data-testid={`home-${c.title.toLowerCase().replace(/\s+/g, '-')}`}
-          >
-            <div className="font-semibold text-console-text">{c.title}</div>
-            <div className="text-sm text-console-muted mt-1">{c.subtitle}</div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+﻿import { useEffect,useState } from 'react';
+import { useUiStore,type Screen } from '../store/uiStore';
+import { useSettingsStore } from '../store/settingsStore';
+import { useIdentityStore } from '../store/identityStore';
+import { initStorage } from '../core/persistence/appStorage';
+import { records } from '../core/unit/service';
+import { traineeHistory } from '../core/learning/trainees';
+import { calculateSkillDNA } from '../core/learning/skillDNA';
+import { instructorWorkspace } from '../core/instructor/service';
+import type { StoredSession } from '../core/persistence/storage';
+import { useWorkspaceAccess } from './AppShell';
+const SHORTCUTS:{group:string;items:[Screen,string,string][]}[]=[
+ {group:'Train & assess',items:[['crew','Duo Crew Mode','Shared observations, separate decisions'],['history','Session History','Recorded outcomes and source-linked replay'],['editor','Instructor Editor','Author scenarios and inspect AssessGuard']]},
+ {group:'Understand & improve',items:[['learning','Skill DNA','Measured competencies and unassessed areas'],['adaptive','Adaptive Training','Corrective practice and reserved evaluation'],['progress','Learning Progress','Qualified comparisons across saved outcomes'],['coach','Personal Coach','Source-grounded learning explanations']]},
+ {group:'Manage your workspace',items:[['analytics','Unit Intelligence','Scoped participation and competency coverage'],['units','Units & Identities','Local membership and instructor scope'],['transfer','Backups & Transfer','Validate, export and recover local records'],['settings','Settings','Graphics, accessibility and display preferences']]},
+];
+export function HomeScreen(){
+ const navigate=useUiStore(s=>s.navigate),traineeId=useSettingsStore(s=>s.traineeId),userId=useIdentityStore(s=>s.userId),access=useWorkspaceAccess();const key=JSON.stringify([userId,traineeId]);
+ const [overview,setOverview]=useState<{key:string;name:string;sessions:StoredSession[];assignments:number|null;competencies:number|null;loading:boolean;error:string}>({key:'',name:'',sessions:[],assignments:null,competencies:null,loading:true,error:''});
+ useEffect(()=>{let live=true;setOverview({key,name:'',sessions:[],assignments:null,competencies:null,loading:true,error:''});void (async()=>{const storage=await initStorage();let sessions:StoredSession[]=[],name='Choose a trainee to begin',assignments:number|null=null,competencies:number|null=null;
+ if(!userId){const profile=await storage.getTrainee(traineeId);if(profile&&!profile.archived){name=profile.displayName;sessions=(await traineeHistory(storage,profile)).sessions;competencies=new Set(calculateSkillDNA(profile,sessions).cohorts.flatMap(c=>c.competencies.filter(c=>c.score!==null).map(c=>c.id))).size;}}
+ else{const memberships=(await records(storage,'memberships')).filter(m=>m.userId===userId&&!m.archived),unit=memberships.find(m=>m.role==='instructor'||m.role==='trainee');if(unit){const workspace=await instructorWorkspace(storage,{userId},unit.unitId);name=workspace.user.name;sessions=workspace.sessions;assignments=workspace.assignments.filter(a=>['assigned','started'].includes(a.status)).length;}else name='Open unit intelligence for authorized roster summaries';}
+ if(live)setOverview({key,name,sessions,assignments,competencies,loading:false,error:''});})().catch(e=>{if(live)setOverview({key,name:'Workspace overview unavailable',sessions:[],assignments:null,competencies:null,loading:false,error:e instanceof Error?e.message:String(e)});});return()=>{live=false;};},[key,userId,traineeId]);
+ const current=overview.key===key?overview:null,recent=current?.sessions.filter(s=>s.summary.status==='completed').sort((a,b)=>b.summary.endedAt.localeCompare(a.summary.endedAt)).slice(0,3)??[];
+ return <main className="overview-page"><header className="overview-heading"><div><span className="eyebrow">OBSERVE. UNDERSTAND. IMPROVE.</span><h1>Your training starts here.</h1><p>A clear path from synthetic observation to an evidence-supported decision.</p></div><span className="outline-badge">OFFLINE TRAINING PLATFORM</span></header>
+ <section className="training-hero"><div className="hero-copy"><span className="eyebrow">INDIVIDUAL OBSERVATION EXERCISE</span><h2>Build judgment.<br/>Keep the evidence.</h2><p>Choose a scenario, observe the scene and record your conclusion. Review the original score alongside the observations that support it.</p><div className="hero-actions">{access.permitted('scenarios')&&<button className="primary-action" data-testid="home-scenario-selection" onClick={()=>navigate('scenarios')}>Start training <span aria-hidden="true">↗</span></button>}{access.permitted('generator')&&<button data-testid="home-generate-scenario" onClick={()=>navigate('generator')}>Generate exercise</button>}{access.permitted('instructor')&&<button data-testid="home-instructor-&-assignments" onClick={()=>navigate('instructor')}>Continue assigned training</button>}</div></div><div className="training-route"><span className="eyebrow">YOUR EXERCISE, STEP BY STEP</span>{[['01','Choose your trainee','Keep each learning history attributable.'],['02','Observe & decide','Record observations before your conclusion.'],['03','Review & practice','Follow the saved evidence into your next exercise.']].map(([number,title,description])=><div className="route-step" key={number}><span>{number}</span><div><strong>{title}</strong><p>{description}</p></div></div>)}{access.permitted('trainees')&&<button className="text-action" data-testid="home-trainee-profiles" onClick={()=>navigate('trainees')}>Select or create a trainee →</button>}</div></section>
+ <section className="overview-metrics" aria-label="Saved training overview"><article><span className="eyebrow">SELECTED CONTEXT</span><strong className="context-name">{current?.loading?'Loading local records…':current?.name??'Checking workspace…'}</strong><small>Data remain in this browser profile</small></article><article><span className="eyebrow">COMPLETED SESSIONS</span><strong>{current?.loading?'—':current?.sessions.filter(s=>s.summary.status==='completed').length??'—'}</strong><small>Within the selected authorized history</small></article><article><span className="eyebrow">{current?.assignments!==null?'ACTIVE ASSIGNMENTS':'MEASURED COMPETENCIES'}</span><strong>{current?.loading?'—':current?.assignments??current?.competencies??'Unassessed'}</strong><small>Availability and sparse evidence are not mastery</small></article></section>
+ {current?.error&&<p role="alert">{current.error}</p>}
+ <div className="overview-columns"><section className="panel recent-sessions"><div className="section-heading"><div><span className="eyebrow">RECORDED TRAINING</span><h2>Recent outcomes</h2></div>{access.permitted('history')&&<a href="#history" onClick={e=>{e.preventDefault();navigate('history');}}>View history →</a>}</div>{recent.length?recent.map(s=><button className="recent-session" key={s.summary.sessionId} onClick={()=>navigate(access.roles.includes('instructor')?'instructor':'history')}><div><strong>{s.summary.scenarioTitle}</strong><small>{s.summary.endedAt.slice(0,10)} · {s.summary.scenarioSnapshot.trainingContract?.stage??'legacy metadata unknown'}</small></div><span>{s.assessment?.overall.toFixed(1)??'—'}<small>original rubric</small></span></button>):<div className="intentional-empty"><span className="empty-symbol" aria-hidden="true">◇</span><h3>Your first review belongs here.</h3><p>Complete an exercise to see its saved result and supporting observations. Missing history is not a zero score.</p></div>}</section><section className="demo-callout"><span className="eyebrow">EXPLORE THE PLATFORM</span><h2>See the full learning chain.</h2><p>A clearly labeled synthetic unit demonstrates curriculum review, group awareness, evidence-supported judgment and qualified progress.</p><button data-testid="home-synthetic-demo" onClick={()=>navigate('demo')}>Open synthetic demo →</button><small>Scripted example data · genuine records preserved</small></section></div>
+ <section className="workspace-shortcuts"><div className="section-heading"><h2>Your workspaces</h2><p>Five connected modules. One evidence trail.</p></div><div className="shortcut-columns">{SHORTCUTS.map(group=>{const items=group.items.filter(([id])=>access.permitted(id)||id==='editor');return items.length>0&&<section key={group.group}><h3>{group.group}</h3>{items.map(([screen,title,description])=><button key={screen} data-testid={'home-'+title.toLowerCase().replace(/\s+/g,'-')} onClick={()=>navigate(screen)}><span><strong>{title}</strong><small>{screen==='editor'&&!access.permitted('editor')?'Instructor access required ? permission checked on entry':description}</small></span><span aria-hidden="true">↗</span></button>)}</section>;})}</div></section></main>;
 }
