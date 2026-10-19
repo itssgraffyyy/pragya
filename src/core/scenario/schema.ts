@@ -1,3 +1,4 @@
+import { trainingContractSchema } from '../assessGuard/models';
 import { groupTrainingSchema } from '../groups/models';
 /**
  * Zod schema for scenario definitions (schemaVersion 1).
@@ -151,6 +152,7 @@ export const scenarioDefinitionSchema = z
   .object({
     schemaVersion: z.literal(SCHEMA_VERSION),
     groupTraining: groupTrainingSchema.optional(),
+    trainingContract: trainingContractSchema.optional(),
     id: z.string().min(1).max(80),
     title: z.string().min(1).max(120),
     description: z.string().min(1).max(2000),

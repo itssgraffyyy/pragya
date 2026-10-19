@@ -21,11 +21,12 @@ import { ScenarioSelectionScreen } from './ui/ScenarioSelectionScreen';
 import { GeneratorScreen } from './ui/GeneratorScreen';
 
 import { SessionSummaryScreen } from './ui/SessionSummaryScreen';
-import { InstructorEditorScreen } from './ui/InstructorEditorScreen';
+
 import { SettingsScreen } from './ui/SettingsScreen';
 import { HistoryScreen } from './ui/HistoryScreen';
 import { initStorage,getStorageWarning } from './core/persistence/appStorage';
 
+const InstructorEditorScreen=lazy(()=>import('./ui/InstructorEditorScreen').then(m=>({default:m.InstructorEditorScreen})));
 const DemoScreen=lazy(()=>import('./ui/DemoScreen').then(m=>({default:m.DemoScreen})));
 const CrewScreen=lazy(()=>import('./ui/CrewScreen').then(m=>({default:m.CrewScreen})));
 const SimulationConsoleScreen=lazy(()=>import('./ui/SimulationConsoleScreen').then(m=>({default:m.SimulationConsoleScreen})));

@@ -1,3 +1,4 @@
+import { integrityResultSchema } from '../assessGuard/models';
 import { groupScoreSchema,groupReportSchema } from '../groups/models';
 import { SIMULATION_EVENT_TYPES } from '../types';
 import { z } from 'zod';
@@ -18,6 +19,7 @@ const contactScore = z.object({
   confidence: confidenceLevelSchema.nullable(), calibration: unit, allowsUnknown: z.boolean().optional(), observationContext: z.string().optional(),
 }).passthrough();
 export const assessmentSchema = z.object({
+  integrity:integrityResultSchema.optional(),
   groupAwareness:z.object({schemaVersion:z.literal(1),groups:z.array(groupScoreSchema).max(8)}).strict().optional(),
   sessionId: z.string(), traineeId: z.string(), scenarioId: z.string(), scenarioVersion: z.string(), policyId: z.string(), policyVersion: z.string(),
   overall: percent, categories: z.object({ detection: percent, classification: percent, procedural: percent, evidence: percent, confidenceCalibration: unit }),
@@ -51,6 +53,12 @@ export const storedSessionSchema = z.object({
     if(event.type==='groupObservationRecorded'&&(!Array.isArray(details?.contactIds)||!details.contactIds.length||new Set(details.contactIds).size!==details.contactIds.length||details.contactIds.some(id=>!ids.has(id))))ctx.addIssue({code:'custom',message:'Invalid group observation contact reference'});
   }
   if(a?.groupAwareness?.groups.some(g=>!s.summary.scenarioSnapshot.groupTraining?.groups.some(d=>d.id===g.groupId)||g.sourceEventIds.some(id=>!s.events.events.some(e=>e.eventId===id))))ctx.addIssue({code:'custom',message:'Invalid group assessment provenance'});
+  for(const event of s.events.events.filter(e=>e.type.startsWith('opportunity'))){
+    const o=s.summary.scenarioSnapshot.trainingContract?.opportunities.find(o=>o.id===event.actionDetails?.opportunityId);
+    if(!o||event.contactId!==o.contactId)ctx.addIssue({code:'custom',message:'Invalid opportunity event reference'});
+    if(event.type==='opportunityAcknowledged'&&!s.events.events.some(p=>p.type==='opportunityPresented'&&p.eventId===event.actionDetails?.presentationEventId&&p.actionDetails?.opportunityId===o?.id&&p.simTimestamp<=event.simTimestamp))ctx.addIssue({code:'custom',message:'Invalid observation presentation provenance'});
+  }
+  if(a?.integrity?.competencies.some(c=>c.sourceEventIds.some(id=>!s.events.events.some(e=>e.eventId===id))||c.eligibleContactIds.some(id=>!ids.has(id))))ctx.addIssue({code:'custom',message:'Invalid eligibility provenance'});
   if(a?.contacts.some((c)=>!ids.has(c.contactId)))ctx.addIssue({code:'custom',message:'Unknown contact in assessment'});
   if (a && new Set(a.contacts.map((c) => c.contactId)).size !== a.contacts.length) ctx.addIssue({ code: 'custom', message: 'Duplicate contact score' });
 });

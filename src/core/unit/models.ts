@@ -1,3 +1,4 @@
+import { assessmentReviewSchema } from '../assessGuard/reviewModel';
 import { scenarioDefinitionSchema } from '../scenario/schema';
 import { scoringPolicySchema } from '../scoring/policy';
 import { crewSessionSchema } from '../crew/models';
@@ -18,10 +19,10 @@ export const assignmentSchema = z.object({ schemaVersion:z.literal(1), id, unitI
 export const annotationSchema = z.object({ schemaVersion:z.literal(1), id, unitId:id, authorId:id, traineeId:id, sessionId:id, createdAt:timestamp, text:z.string().trim().min(1).max(4000), objectiveIds:z.array(objectiveIdSchema).max(30) }).strict();
 export const policyRecordSchema=z.object({schemaVersion:z.literal(1),id,unitId:id,authorId:id,createdAt:timestamp,policy:scoringPolicySchema}).strict();
 export const scenarioDocumentSchema=z.object({schemaVersion:z.literal(1),id,unitId:id.nullable(),authorId:id,scenarioId:id,title:name,status:z.enum(['draft','published','archived']),draftText:z.string().max(500000),updatedAt:timestamp}).strict();
-export const scenarioVersionSchema=z.object({schemaVersion:z.literal(1),id,unitId:id.nullable(),authorId:id,createdAt:timestamp,scenario:scenarioDefinitionSchema}).strict();
+export const scenarioVersionSchema=z.object({schemaVersion:z.literal(1),id,unitId:id.nullable(),authorId:id,createdAt:timestamp,assessmentReviewId:id.optional(),scenario:scenarioDefinitionSchema}).strict();
 export const crewAnnotationSchema=z.object({schemaVersion:z.literal(1),id,unitId:id,crewId:id,authorId:id,createdAt:timestamp,text:z.string().trim().min(1).max(4000),objectiveIds:z.array(objectiveIdSchema).max(30)}).strict();
 export const demoManifestSchema=z.object({schemaVersion:z.literal(1),id:z.literal('pragya-synthetic-demo-v1'),unitId:id,userIds:z.array(id).min(1).max(100),traineeIds:z.array(id).min(1).max(100),createdAt:timestamp,label:z.string().max(200)}).strict();
-export const trainingSchemas = { demoManifests:demoManifestSchema, crewAnnotations:crewAnnotationSchema, policies:policyRecordSchema, scenarioDocuments:scenarioDocumentSchema, scenarioVersions:scenarioVersionSchema, crews:crewSessionSchema, users:userSchema, units:unitSchema, memberships:membershipSchema, instructors:instructorAssignmentSchema, cohorts:cohortSchema, ownership:ownershipSchema, assignments:assignmentSchema, annotations:annotationSchema };
+export const trainingSchemas = { assessmentReviews:assessmentReviewSchema, demoManifests:demoManifestSchema, crewAnnotations:crewAnnotationSchema, policies:policyRecordSchema, scenarioDocuments:scenarioDocumentSchema, scenarioVersions:scenarioVersionSchema, crews:crewSessionSchema, users:userSchema, units:unitSchema, memberships:membershipSchema, instructors:instructorAssignmentSchema, cohorts:cohortSchema, ownership:ownershipSchema, assignments:assignmentSchema, annotations:annotationSchema };
 export type TrainingKind = keyof typeof trainingSchemas;
 export type TrainingRecords = { [K in TrainingKind]: z.infer<(typeof trainingSchemas)[K]> };
 export type TrainingRecord = { [K in TrainingKind]: { kind:K; id:string; value:TrainingRecords[K] } }[TrainingKind];

@@ -1,3 +1,4 @@
+import type { Opportunity,OpportunityView } from '../assessGuard/models';
 import { groupStateAt,groupOffset } from '../groups/projection';
 import { groupReportSchema,type GroupReport,type GroupView } from '../groups/models';
 /**
@@ -53,6 +54,7 @@ export interface EngineConfig {
 export interface TraineeContactView {
   id: string;
   category: string;
+  visualShape?:'rotorCompact'|'rotorWide'|'wingOutline'|'flappingOutline'|'plainOutline'|'indistinct';
   appearance: ContactDefinition['appearance'];
   visibility: ContactVisibilityState;
   position: Vec3 | null;
@@ -65,6 +67,7 @@ export interface TraineeContactView {
 /** Trainee-facing snapshot of the whole scenario. */
 export interface TraineeView {
   groups: GroupView[];
+  opportunities:OpportunityView[];
   simTime: number;
   duration: number;
   state: SimulationState;
@@ -86,6 +89,7 @@ export interface ContactGroundTruth {
   contactId: string;
   groundTruthLabel: string;
   category: string;
+  visualShape?:'rotorCompact'|'rotorWide'|'wingOutline'|'flappingOutline'|'plainOutline'|'indistinct';
   assessment: ContactDefinition['assessment'];
 }
 
@@ -102,6 +106,7 @@ export class SimulationEngine {
   private _assessments = new Map<string, ContactAssessment>();
   private _timedEventsFired = new Set<string>();
   private _groupStatesFired = new Set<string>();
+  private _opportunityAvailability = new Map<string,boolean>();
   private _error: string | null = null;
   /** Last known rendered positions (for frozen/delayed feeds). */
   private _lastPositions = new Map<string, Vec3>();
@@ -147,6 +152,7 @@ export class SimulationEngine {
         throw new Error('Scenario has no contacts');
       }
       this.transition('ready');
+      for(const o of this.scenario.trainingContract?.opportunities??[])this.appendEvent('opportunityGenerated',{opportunityId:o.id,channel:o.channel,scheduledAt:o.atTime},undefined,o.contactId);
     } catch (e) {
       this._error = (e as Error).message;
       this.transition('error');
@@ -185,6 +191,7 @@ export class SimulationEngine {
     this._simTime = 0;
     this._timedEventsFired.clear();
     this._groupStatesFired.clear();
+    this._opportunityAvailability.clear();
     this._lastPositions.clear();
     this._error = null;
     this.startedAtIso = null;
@@ -279,6 +286,11 @@ export class SimulationEngine {
       if(state.atTime<=currTime&&!this._groupStatesFired.has(state.id)){
         this._groupStatesFired.add(state.id);this.appendEvent('groupStateChanged',{groupId:group.id,stateId:state.id,members:state.members,formation:state.formation,scheduledAt:state.atTime});
       }
+    }
+    for(const o of this.scenario.trainingContract?.opportunities??[]){
+      const available=this.opportunityAvailable(o,currTime),before=this._opportunityAvailability.get(o.id)??false;
+      if(available!==before)this.appendEvent(available?'opportunityAvailable':'opportunityUnavailable',{opportunityId:o.id,channel:o.channel},undefined,o.contactId);
+      this._opportunityAvailability.set(o.id,available);
     }
     this.updateLastPositions(currTime);
   }
@@ -445,6 +457,26 @@ export class SimulationEngine {
     }
   }
 
+  private opportunityAvailable(o:Opportunity,time:number):boolean{
+    const contact=this.scenario.contacts.find(c=>c.id===o.contactId);
+    if(!contact?.observable||time<o.atTime||time>=o.until||visibilityAt(contact,time)!=='visible')return false;
+    return o.channel==='text'||rawFeedState(this.scenario.sensor,'primary',time).feedLive;
+  }
+  /** Called only by instrumented visible text UI; does not establish human perception. */
+  presentOpportunity(id:string):void{
+    this.assertActionsAllowed();const o=this.scenario.trainingContract?.opportunities.find(x=>x.id===id);
+    if(!o||o.channel!=='text'||!this.opportunityAvailable(o,this._simTime))throw new Error('Instrumented text opportunity is not available');
+    if(this.log.getAll().some(e=>e.type==='opportunityPresented'&&e.actionDetails?.opportunityId===id))return;
+    this.appendEvent('opportunityPresented',{opportunityId:id,channel:o.channel,instrumentation:'text-panel-v1'},undefined,o.contactId);
+  }
+  acknowledgeOpportunity(id:string):void{
+    this.assertActionsAllowed();const o=this.scenario.trainingContract?.opportunities.find(x=>x.id===id);
+    const presented=this.log.getAll().find(e=>e.type==='opportunityPresented'&&e.actionDetails?.opportunityId===id);
+    if(!o||!presented||!this.opportunityAvailable(o,this._simTime))throw new Error('Acknowledge an available, presented observation');
+    if(this._assessments.get(o.contactId)?.submitted)throw new Error('Observation must be recorded before the final decision');
+    if(this.log.getAll().some(e=>e.type==='opportunityAcknowledged'&&e.actionDetails?.opportunityId===id))return;
+    this.appendEvent('opportunityAcknowledged',{opportunityId:id,presentationEventId:presented.eventId},undefined,o.contactId);
+  }
   /** Attributable group observation; never substitutes for a person's perception. */
   recordGroupObservation(groupId:string,contactIds:string[]):void{
     this.assertActionsAllowed();const view=this.traineeView().groups.find(g=>g.id===groupId);
@@ -514,7 +546,8 @@ export class SimulationEngine {
       if(position){const offset=groupOffset(this.scenario.groupTraining,def.id,Math.max(0,t-primaryFeed.delaySeconds));position[0]+=offset[0];position[1]+=offset[1];position[2]+=offset[2];}
       return {
         id: def.id,
-        category: def.category,
+        category: this.scenario.trainingContract?'syntheticContact':def.category,
+        ...(this.scenario.trainingContract?{visualShape:({smallMultirotor:'rotorCompact',largeMultirotor:'rotorWide',fixedWing:'wingOutline',birdLike:'flappingOutline',civilianLike:'plainOutline',unidentified:'indistinct',decoy:'indistinct'} as const)[def.category]}:{}),
         appearance: def.appearance,
         visibility,
         position,
@@ -530,6 +563,7 @@ export class SimulationEngine {
       feedStates.secondary = rawFeedState(this.scenario.sensor, 'secondary', t);
     }
     return {
+      opportunities:(this.scenario.trainingContract?.opportunities??[]).map(o=>({...o,available:this.opportunityAvailable(o,t)&&['running','paused'].includes(this._state),presented:this.log.getAll().some(e=>e.type==='opportunityPresented'&&e.actionDetails?.opportunityId===o.id),acknowledged:this.log.getAll().some(e=>e.type==='opportunityAcknowledged'&&e.actionDetails?.opportunityId===o.id)})),
       groups:(this.scenario.groupTraining?.groups??[]).flatMap(group=>{
         const state=groupStateAt(group,t);if(!state)return [];
         const members=state.members.filter(id=>contacts.some(c=>c.id===id&&c.visibility==='visible'&&c.position!==null&&this.contactDef(id).observable));

@@ -1,3 +1,4 @@
+import { ScenarioQualityPanel } from './ScenarioQualityPanel';
 import { initStorage } from '../core/persistence/appStorage';
 import { scenarioLibrary,saveScenarioDocument } from '../core/instructor/service';
 import { records } from '../core/unit/service';
@@ -29,6 +30,7 @@ export function InstructorEditorScreen() {
   const [text, setText] = useState(() => JSON.stringify(BUNDLED_SCENARIOS[0], null, 2));
   const [validation, setValidation] = useState<{ valid: boolean; errors: string[] } | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [approvalId,setApprovalId]=useState<string|undefined>();
 
   const loadIntoEditor = (id: string) => {
     const document=documents.find(d=>d.scenarioId===id);const scenario = library.find((s) => s.id === id);
@@ -46,7 +48,7 @@ export function InstructorEditorScreen() {
   };
 
   const persist = async (status:'draft'|'published'|'archived') => {
-    try{const storage=await initStorage();const document=await saveScenarioDocument(storage,userId?{userId}:null,unitId,text,status,selectedId);setSelectedId(document.scenarioId);setSaved(`${document.scenarioId} (${status})`);setValidation({valid:true,errors:[]});await refresh();}catch(e){setValidation({valid:false,errors:[(e as Error).message]});}
+    try{const storage=await initStorage();const document=await saveScenarioDocument(storage,userId?{userId}:null,unitId,text,status,selectedId,approvalId);setSelectedId(document.scenarioId);setSaved(`${document.scenarioId} (${status})`);setValidation({valid:true,errors:[]});await refresh();}catch(e){setValidation({valid:false,errors:[(e as Error).message]});}
   };
   const doSave = () => {void persist('published');};
   const doImport = (file: File) => {
@@ -140,6 +142,7 @@ export function InstructorEditorScreen() {
         data-testid="editor-textarea"
       />
 
+      <ScenarioQualityPanel text={text} actor={userId?{userId}:null} unitId={unitId} onDeclare={scenario=>{setSelectedId(scenario.id);setText(JSON.stringify(scenario,null,2));setSaved(null);}} onApproved={setApprovalId}/>
       {validation && (
         <div
           className={`mt-3 p-3 rounded border ${

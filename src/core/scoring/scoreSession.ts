@@ -1,3 +1,4 @@
+import { assessmentIntegrity } from '../assessGuard/eligibility';
 import { scoreGroupReports } from './groupReporting';
 /** PRAGYA Module 2 — session scorer (aggregates per-contact scores). */
 
@@ -88,6 +89,7 @@ export function scoreSession(input: ScoringInput, policy: ScoringPolicy): Assess
   const calibration = avg((c) => c.calibration);
 
   return {
+    ...(input.scenario.trainingContract?{integrity:assessmentIntegrity(input,policy)}:{}),
     ...(input.scenario.groupTraining?{groupAwareness:{schemaVersion:1 as const,groups:scoreGroupReports(input,policy)}}:{}),
     sessionId: input.sessionId,
     traineeId: input.traineeId,

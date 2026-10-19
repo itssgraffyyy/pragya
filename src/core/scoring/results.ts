@@ -1,3 +1,4 @@
+import type { IntegrityResult } from '../assessGuard/models';
 import type { GroupScore } from '../groups/models';
 /**
  * PRAGYA Module 2 — Scoring result types.
@@ -45,6 +46,7 @@ export interface ContactScore {
 }
 
 export interface AssessmentResult {
+  integrity?:IntegrityResult;
   groupAwareness?: {schemaVersion:1;groups:GroupScore[]};
   sessionId: string;
   traineeId: string;

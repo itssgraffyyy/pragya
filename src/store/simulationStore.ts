@@ -61,6 +61,8 @@ export interface SimulationStore {
   selectResponse: (contactId: string, r: string) => void;
   submitAssessment: (contactId: string) => void;
 
+  presentOpportunity:(id:string)=>void;
+  acknowledgeOpportunity:(id:string)=>void;
   recordGroupObservation:(groupId:string,contactIds:string[])=>void;
   submitGroupReport:(groupId:string,report:GroupReport,confidence:'low'|'medium'|'high')=>void;
   clearError: () => void;
@@ -228,6 +230,8 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
     }
   },
 
+  presentOpportunity:id=>guard(set,get,e=>e.presentOpportunity(id)),
+  acknowledgeOpportunity:id=>guard(set,get,e=>e.acknowledgeOpportunity(id)),
   recordGroupObservation:(groupId,contactIds)=>guard(set,get,e=>e.recordGroupObservation(groupId,contactIds)),
   submitGroupReport:(groupId,report,confidence)=>{
     guard(set,get,e=>e.submitGroupReport(groupId,report,confidence));

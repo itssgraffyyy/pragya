@@ -16,6 +16,7 @@ Keep the same hostname, port and browser profile to access the same IndexedDB re
 
 ## Training workflows
 
+- **Assessment integrity:** Instructor Editor → AssessGuard test bench → exact-version review/publication; instrumented text observations → per-competency eligibility in AAR and Skill DNA. Historical scores remain intact. See [Module 5](MODULE_5.md) for completed and pending phases.
 - **Individual:** select a trainee → scripted or seeded scenario → submit classification/confidence/evidence/response → explainable assessment and recorded-event replay.
 - **Personal learning:** Skill DNA and recurring patterns → evidence-based recommendation → tailored practice → unseen evaluation → comparable progress and refresher planning. Intelligence and coaching are deterministic offline rules, not a trained language model.
 - **Crew:** two profiles → one authoritative scenario/clock → separate individual commitments → structured evidence sharing and acknowledgments → confirmed joint report → individual and crew AAR. One local tab holds control; a saved paused prefix supports takeover.
@@ -41,4 +42,4 @@ Browser tests serve the production build and real offline service worker. They e
 
 Local identity selection is **not secure authentication**. A person with the browser/OS profile or developer tools can inspect or alter local records. Use separate OS/browser profiles and host filesystem protections for private local operation. Backups contain private records; SHA-256 is a corruption check, not encryption or a signature.
 
-Duo Mode is single-laptop training. Closed-LAN synchronization, a packaged desktop executable and VR are not implemented. Multi-contact scenarios do not implement coordinated swarm dynamics. Synthetic sensors and internal simulator learning metrics are not validated real-world sensing or operational readiness measures. Hardware observations apply only to the tested host; consult TEST_REPORT.md before making broader claims.
+Duo Mode is single-laptop training. Closed-LAN synchronization, a packaged desktop executable and VR are not implemented. Bounded synthetic group formations support educational group awareness; validated physical swarm dynamics are not implemented. Synthetic sensors and internal simulator learning metrics are not validated real-world sensing or operational readiness measures. Hardware observations apply only to the tested host; consult TEST_REPORT.md before making broader claims.

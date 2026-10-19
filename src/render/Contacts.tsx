@@ -48,6 +48,7 @@ function ContactMesh({
     }
   });
 
+  const renderCategory=contact.visualShape?{rotorCompact:'smallMultirotor',rotorWide:'largeMultirotor',wingOutline:'fixedWing',flappingOutline:'birdLike',plainOutline:'civilianLike',indistinct:'unidentified'}[contact.visualShape]:contact.category;
   const scale = contact.appearance.scale;
 
   return (
@@ -60,7 +61,7 @@ function ContactMesh({
       }}
       name={`contact-${contact.id}`}
     >
-      {contact.category === 'smallMultirotor' || contact.category === 'civilianLike' ? (
+      {renderCategory === 'smallMultirotor' || renderCategory === 'civilianLike' ? (
         <group>
           <mesh>
             <boxGeometry args={[0.9, 0.35, 0.9]} />
@@ -78,7 +79,7 @@ function ContactMesh({
             </mesh>
           ))}
         </group>
-      ) : contact.category === 'largeMultirotor' ? (
+      ) : renderCategory === 'largeMultirotor' ? (
         <group>
           <mesh>
             <boxGeometry args={[1.6, 0.5, 1.6]} />
@@ -96,7 +97,7 @@ function ContactMesh({
             </mesh>
           ))}
         </group>
-      ) : contact.category === 'fixedWing' ? (
+      ) : renderCategory === 'fixedWing' ? (
         <group>
           <mesh rotation={[0, Math.PI / 2, 0]}>
             <cylinderGeometry args={[0.25, 0.25, 2.4, 8]} />
@@ -111,7 +112,7 @@ function ContactMesh({
             <meshStandardMaterial color={baseColor} />
           </mesh>
         </group>
-      ) : contact.category === 'birdLike' ? (
+      ) : renderCategory === 'birdLike' ? (
         <group>
           <mesh>
             <sphereGeometry args={[0.28, 6, 6]} />

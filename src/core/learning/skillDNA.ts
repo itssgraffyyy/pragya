@@ -1,3 +1,4 @@
+import { integrityForSession,learningEligible } from '../assessGuard/eligibility';
 import type { StoredSession } from '../persistence/storage';
 import type { ContactScore } from '../scoring/results';
 import type { TraineeProfile } from './profile';
@@ -42,13 +43,14 @@ export function cohortKey(s: StoredSession): string {
   return stableKey({ policyId:s.assessment?.policyId, policyVersion:s.assessment?.policyVersion, policy:s.scoringPolicy ?? ('snapshot-unavailable:'+s.summary.sessionId), conditions:conditionsFor(s) });
 }
 export function measuredSessions(profile: TraineeProfile, sessions: StoredSession[]): StoredSession[] {
-  return [...new Map(sessions.filter((s)=>validSession(s) && s.summary.status==='completed' && s.assessment && s.assessment.contacts.some((c)=>c.assessable) &&
+  return [...new Map(sessions.filter((s)=>validSession(s) && s.summary.status==='completed' && s.assessment && s.assessment.contacts.some((c)=>c.assessable) && (!s.summary.scenarioSnapshot.trainingContract||integrityForSession(s).competencies.some(c=>['eligible','partially_eligible'].includes(c.state))) &&
     (s.summary.traineeId===profile.id || profile.legacySessionIds.includes(s.summary.sessionId)))
     .map((s)=>[s.summary.sessionId,s])).values()].sort((a,b)=>a.summary.endedAt.localeCompare(b.summary.endedAt) || a.summary.sessionId.localeCompare(b.summary.sessionId));
 }
 const avg=(xs:number[])=>xs.reduce((a,b)=>a+b,0)/xs.length;
 const rounded=(n:number)=>Math.round(n*100)/100;
 function valueFor(id:CompetencyId,c:ContactScore,s:StoredSession):number|null {
+  if(!learningEligible(s,id,c.contactId))return null;
   const def=s.summary.scenarioSnapshot.contacts.find((d)=>d.id===c.contactId);
   switch(id) {
     case 'detection': return c.detection*100;
@@ -79,7 +81,7 @@ export function calculateSkillDNA(profile:TraineeProfile,sessions:StoredSession[
         return pairs.length ? [{ sessionId:s.summary.sessionId, contactIds:pairs.map((p)=>p.c.contactId), date:s.summary.endedAt, score:rounded(avg(pairs.map((p)=>p.value))), samples:pairs.length }] : [];
       });
       if(def.id==='consistency') {
-        const xs=group.filter((s)=>s.assessment!.contacts.some((c)=>c.assessable));
+        const xs=group.filter((s)=>learningEligible(s,'consistency')&&learningEligible(s,'classification')&&s.assessment!.contacts.some((c)=>c.assessable));
         evidence=xs.flatMap((s,i)=>{if(i===0)return []; const values=xs.slice(0,i+1).map((x)=>x.assessment!.categories.classification); const mean=avg(values);
           return [{ sessionId:s.summary.sessionId, contactIds:[], date:s.summary.endedAt, score:rounded(Math.max(0,100-Math.sqrt(avg(values.map((v)=>(v-mean)**2))))), samples:1 }]; });
       }

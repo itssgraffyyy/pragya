@@ -1,3 +1,4 @@
+import { AssessmentIntegrity } from './AssessmentIntegrity';
 import { ReviewLearningContext } from './ReviewLearningContext';
 import { useEffect, useMemo, useState } from 'react';
 import type { StoredSession } from '../core/persistence/storage';
@@ -44,6 +45,7 @@ export function AssessmentDashboard({ session, historySessions }: { session: Sto
   }
   return <section className="panel p-4 my-4 space-y-4" data-testid="assessment-dashboard">
     <h3 className="font-semibold text-xl">Decision assessment</h3>
+    <AssessmentIntegrity session={session}/>
     <p>{preview ? 'Policy preview' : session.assessment ? 'Recorded assessment' : 'Legacy recalculation (excluded from Skill DNA)'}: {result.policyId}@{result.policyVersion}</p>
     <p className="text-2xl" data-testid="assessment-overall">Overall: {result.overall.toFixed(1)} / 100</p>
     <div className="grid grid-cols-2 gap-2">
@@ -74,7 +76,7 @@ export function AssessmentDashboard({ session, historySessions }: { session: Sto
       {frames.length > 0 ? <>
         <label>Replay event <input aria-label="Replay event" type="range" min="0" max={frames.length - 1} value={frameIndex} onChange={(e) => setFrameIndex(Number(e.target.value))} /></label>
         {frame && <div data-testid="replay-frame"><p>T+{frame.event.simTimestamp}s: {frame.event.type} {frame.event.contactId}</p>
-          <p>Logged decision-time observations:</p><ul>{frame.observations.map((e) => <li key={e.eventId}>T+{e.simTimestamp}: {e.type} {e.evidence?.join(', ')} {e.sensorState && JSON.stringify(e.sensorState)} {e.type.startsWith('group')&&JSON.stringify(e.actionDetails)}</li>)}</ul>
+          <p>Logged decision-time observations:</p><ul>{frame.observations.map((e) => <li key={e.eventId}>T+{e.simTimestamp}: {e.type} {e.evidence?.join(', ')} {e.sensorState && JSON.stringify(e.sensorState)} {(e.type.startsWith('group')||e.type.startsWith('opportunity'))&&JSON.stringify(e.actionDetails)}</li>)}</ul>
           {frame.decision?.type==='groupReportSubmitted'&&<p>Group report: {JSON.stringify(frame.decision.actionDetails)}</p>}
           {frame.decision && frame.decision.type!=='groupReportSubmitted' && <p>Submitted: {frame.decision.classification}; confidence: {frame.decision.confidence}; evidence: {frame.decision.evidence?.join(', ') || 'none'}; procedure: {frame.decision.proceduralResponse}.</p>}
         </div>}
