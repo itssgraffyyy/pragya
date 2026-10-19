@@ -47,6 +47,7 @@ export interface ContactScore {
 
 export interface AssessmentResult {
   integrity?:IntegrityResult;
+  evidenceMind?:import('../evidenceMind/models').EvidenceJudgment;
   groupAwareness?: {schemaVersion:1;groups:GroupScore[]};
   sessionId: string;
   traineeId: string;

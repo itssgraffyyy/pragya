@@ -1,4 +1,4 @@
-﻿import { SimulationEngine } from '../sim/engine';
+import { SimulationEngine } from '../sim/engine';
 import { buildSessionExport } from '../sim/sessionSummary';
 import type { ScenarioDefinition } from '../types';
 import type { ScoringPolicy } from '../scoring/policy';
@@ -8,6 +8,7 @@ export function demoSession(scenario:ScenarioDefinition,traineeId:string,session
  const engine=new SimulationEngine({scenario:structuredClone(scenario),traineeId,sessionId});engine.load();engine.start();
  for(let i=0;i<scenario.duration&&engine.state==='running';i++){
   engine.tick(1);
+  for(const o of engine.traineeView().opportunities)if(o.available){engine.presentOpportunity(o.id);engine.acknowledgeOpportunity(o.id);}
   for(const contact of engine.traineeView().contacts){
    if(!['visible','occluded'].includes(contact.visibility)||contact.assessment.submitted)continue;
    const def=scenario.contacts.find(c=>c.id===contact.id)!;

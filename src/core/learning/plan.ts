@@ -1,4 +1,5 @@
-﻿import { z } from 'zod';
+import { scoringPolicySchema } from '../scoring/policy';
+import { z } from 'zod';
 import { objectiveIdSchema } from './profile';
 import { scenarioDefinitionSchema } from '../scenario/schema';
 import { COMPETENCIES } from './skillDNA';
@@ -13,7 +14,7 @@ export const recommendationSchema=z.object({
 export type LearningRecommendation=z.infer<typeof recommendationSchema>;
 export const exerciseSchema=z.object({
   id:z.string(),recommendationId:z.string(),traineeId:z.string(),stage:z.enum(['practice','evaluation','followup']),scenario:scenarioDefinitionSchema,
-  generatorVersion:z.string(),seed:z.number().int().nonnegative(),config:generatorConfigSchema,rationale:z.array(z.string()),unsupportedConstraints:z.array(z.string()),
+  policySnapshot:scoringPolicySchema.optional(),generatorVersion:z.string(),seed:z.number().int().nonnegative(),config:generatorConfigSchema,rationale:z.array(z.string()),unsupportedConstraints:z.array(z.string()),
   baselineSessionIds:z.array(z.string()),createdAt:z.string().datetime(),sessionId:z.string().nullable(),completedAt:z.string().datetime().nullable(),status:z.enum(['prepared','running','completed','aborted']),
 }).strict();
 export type AdaptiveExercise=z.infer<typeof exerciseSchema>;

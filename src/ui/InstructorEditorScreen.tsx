@@ -16,7 +16,7 @@ import { parseScenarioJson } from '../core/scenario/validate';
 import { BUNDLED_SCENARIOS } from '../core/scenario/bundled';
 import { useUiStore } from '../store/uiStore';
 import { useSimulationStore } from '../store/simulationStore';
-import { useSettingsStore } from '../store/settingsStore';
+
 import { SCHEMA_VERSION } from '../core/types';
 
 export function InstructorEditorScreen() {
@@ -25,7 +25,7 @@ export function InstructorEditorScreen() {
   useEffect(()=>{void refresh().catch(e=>setValidation({valid:false,errors:[String(e)]}));},[userId]);
   const navigate = useUiStore((s) => s.navigate);
   const loadScenario = useSimulationStore((s) => s.loadScenario);
-  const traineeId = useSettingsStore((s) => s.traineeId);
+
   const [selectedId, setSelectedId] = useState<string>(BUNDLED_SCENARIOS[0]?.id ?? '');
   const [text, setText] = useState(() => JSON.stringify(BUNDLED_SCENARIOS[0], null, 2));
   const [validation, setValidation] = useState<{ valid: boolean; errors: string[] } | null>(null);
@@ -80,7 +80,7 @@ export function InstructorEditorScreen() {
     const result = parseScenarioJson(text);
     setValidation({ valid: result.valid, errors: result.errors });
     if (result.valid) {
-      loadScenario(result.scenario!, `preview-${Date.now().toString(36)}`, userId?`preview:${userId}`:traineeId);
+      loadScenario(result.scenario!, `preview-${Date.now().toString(36)}`, userId?`preview:${userId}`:'preview:local-demo');
       navigate('console');
     }
   };

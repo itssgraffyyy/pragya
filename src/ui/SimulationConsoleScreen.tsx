@@ -87,10 +87,11 @@ export function SimulationConsoleScreen() {
   return (
     <div className="console-grid">
       <SimClockDriver />
+      {view.guidance&&<aside className="col-span-full panel p-2" data-testid="practice-guidance">{view.guidance}</aside>}
 
       {/* Top bar */}
       <header className="col-span-full flex items-center gap-3 px-4 bg-console-panel border-b border-console-border">
-        <span className="font-semibold text-console-accent">PRAGYA</span>
+        <span className="font-semibold text-console-accent">PRAGYA</span><span data-testid="training-stage">{view.trainingStage}</span>
         <span className="text-sm text-console-muted truncate">{view.title}</span>
         <span className="ml-auto font-mono text-sm" data-testid="sim-clock">
           T+{formatClock(view.simTime)} / {formatClock(view.duration)}

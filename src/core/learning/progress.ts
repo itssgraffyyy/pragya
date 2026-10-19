@@ -1,9 +1,11 @@
-﻿import type { StorageAdapter, StoredSession } from '../persistence/storage';
+import { reservedEvaluation } from '../evidenceMind/reservation';
+import { independentScenario } from '../evidenceMind/stages';
+import type { StorageAdapter, StoredSession } from '../persistence/storage';
 import type { TraineeProfile } from './profile';
 import { calculateSkillDNA, cohortKey, measuredSessions, type CompetencyId } from './skillDNA';
 import type { LearningPlan, LearningRecommendation } from './plan';
 import { deriveSeed } from '../rng';
-export interface ProgressComparison { recommendationId:string; exerciseId:string; stage:'before'|'afterPractice'|'unseenEvaluation'|'followup'; competency:CompetencyId; baseline:number|null; current:number|null; delta:number|null; comparable:boolean; sessionIds:string[]; explanation:string }
+export interface ProgressComparison { recommendationId:string; exerciseId:string; stage:'before'|'afterPractice'|'unseenEvaluation'|'followup'; competency:CompetencyId; baseline:number|null; current:number|null; recordedOverall:number|null; delta:number|null; comparable:boolean; sessionIds:string[]; explanation:string }
 export interface Refresher { competency:CompetencyId; objective:string; lastPractice:string; dueAt:string; sessionIds:string[]; reason:string }
 export interface LearningProgress {
   traineeId:string; asOf:string; progression:'foundationPractice'|'developing'|'consistentPerformance'|'advancedPractice'|'refresherRecommended';
@@ -17,12 +19,13 @@ export function learningProgress(profile:TraineeProfile,sessions:StoredSession[]
     return {cohortKey:cohort.key,competency:c.id,baseline,current,change:baseline!==null&&current!==null&&c.evidence.length>1?current-baseline:null,sessionIds:c.evidence.map((e)=>e.sessionId),state:c.state};}));
   const comparisons:ProgressComparison[]=[];
   for(const e of plan?.exercises.filter((e)=>e.traineeId===profile.id&&e.status==='completed')??[]){
-    const r=plan!.recommendations.find((r)=>r.id===e.recommendationId);const currentSession=eligible.find((s)=>s.summary.sessionId===e.sessionId);if(!r||!currentSession)continue;
+    const r=plan!.recommendations.find((r)=>r.id===e.recommendationId);const currentSession=sessions.find((s)=>s.summary.sessionId===e.sessionId);if(!r||!currentSession)continue;
     const compatibleBaseline=eligible.filter((s)=>e.baselineSessionIds.includes(s.summary.sessionId)&&cohortKey(s)===cohortKey(currentSession));
     const before=calculateSkillDNA(profile,compatibleBaseline).cohorts[0]?.competencies.find((c)=>c.id===r.competency)?.score??null;
     const current=calculateSkillDNA(profile,[currentSession]).cohorts[0]?.competencies.find((c)=>c.id===r.competency)?.score??null;
-    const comparable=before!==null&&current!==null;
-    comparisons.push({recommendationId:r.id,exerciseId:e.id,stage:e.stage==='practice'?'afterPractice':e.stage==='evaluation'?'unseenEvaluation':'followup',competency:r.competency,baseline:before,current,delta:comparable?Math.round((current!-before!)*100)/100:null,comparable,sessionIds:[...compatibleBaseline.map((s)=>s.summary.sessionId),currentSession.summary.sessionId],explanation:comparable?'Compared saved scores under the same policy and scenario-condition cohort.':'No compatible baseline measurement; no improvement percentage is claimed.'});
+    const declared=!!currentSession.summary.scenarioSnapshot.trainingContract;const qualification=reservedEvaluation(currentSession,sessions);
+    const comparable=before!==null&&current!==null&&(!declared||compatibleBaseline.length>=dna.config.minSessions&&independentScenario(currentSession.summary.scenarioSnapshot)&&qualification.eligible);
+    comparisons.push({recommendationId:r.id,exerciseId:e.id,stage:e.stage==='practice'?'afterPractice':e.stage==='evaluation'?'unseenEvaluation':'followup',competency:r.competency,baseline:before,current,recordedOverall:currentSession.assessment?.overall??null,delta:comparable?Math.round((current!-before!)*100)/100:null,comparable,sessionIds:[...compatibleBaseline.map((s)=>s.summary.sessionId),currentSession.summary.sessionId],explanation:comparable?(declared?'Eligible independent outcomes share objective/version, policy and condition cohort. '+qualification.explanation:'Legacy rubric comparison; presentation, assistance and familiarity metadata are unknown.'):'Insufficient compatible eligible baseline history or independent evaluation; no improvement percentage is claimed. '+(declared?qualification.explanation:'')});
   }
   const refreshers:Refresher[]=[];const ids=new Set<CompetencyId>();
   for(const cohort of [...dna.cohorts].reverse())for(const c of cohort.competencies){

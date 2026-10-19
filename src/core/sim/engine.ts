@@ -66,6 +66,8 @@ export interface TraineeContactView {
 
 /** Trainee-facing snapshot of the whole scenario. */
 export interface TraineeView {
+  trainingStage:string;
+  guidance:string|null;
   groups: GroupView[];
   opportunities:OpportunityView[];
   simTime: number;
@@ -568,6 +570,8 @@ export class SimulationEngine {
       feedStates.secondary = rawFeedState(this.scenario.sensor, 'secondary', t);
     }
     return {
+      trainingStage:this.scenario.trainingContract?.stage??'legacy_unknown',
+      guidance:this.scenario.trainingContract?.stage==='guided_practice'&&this.scenario.trainingContract.assistance.hints?'Practice guidance: record a visible synthetic observation before choosing evidence and a conclusion. Use unknown when the approved observation remains ambiguous.':null,
       opportunities:(this.scenario.trainingContract?.opportunities??[]).map(o=>({...o,available:this.opportunityAvailable(o,t)&&['running','paused'].includes(this._state),presented:this.log.getAll().some(e=>e.type==='opportunityPresented'&&e.actionDetails?.opportunityId===o.id),acknowledged:this.log.getAll().some(e=>e.type==='opportunityAcknowledged'&&e.actionDetails?.opportunityId===o.id)})),
       groups:(this.scenario.groupTraining?.groups??[]).flatMap(group=>{
         const state=groupStateAt(group,t);if(!state)return [];

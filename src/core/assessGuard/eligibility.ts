@@ -9,6 +9,7 @@ export function assessmentIntegrity(input:ScoringInput,policy?:ScoringPolicy):In
  const quality=scenarioQuality(input.scenario,policy),events=input.events.filter(e=>e.sessionId===input.sessionId&&e.traineeId===input.traineeId&&e.simTimestamp<=input.endedAtSimTime),interrupted=events.some(e=>e.type==='sessionAborted'||e.type==='errorOccurred');
  const competencies=contract.competencies.map(b=>{
   const reasonCodes:string[]=[],sourceEventIds:string[]=[],eligibleContactIds:string[]=[];
+  const reservationMissing=['unseen_evaluation','retention_followup'].includes(contract.stage)&&!contract.reservation;if(reservationMissing)reasonCodes.push('unverified_evaluation_reservation');
   const errors=quality.checks.filter(c=>c.severity==='error'&&(c.references.includes(`blueprint:${b.id}`)||c.objective===b.objectiveId||c.objective==='policy'||c.objective==='assessment-integrity'||c.objective==='configuration'||c.objective==='observation'&&b.requiredOpportunityIds.some(id=>c.references.includes(`opportunity:${id}`))));
   if(errors.length)reasonCodes.push(...errors.map(c=>'quality:'+c.id));
   if(interrupted)reasonCodes.push('interrupted_exercise');
@@ -30,7 +31,7 @@ export function assessmentIntegrity(input:ScoringInput,policy?:ScoringPolicy):In
     if(b.eligibility.requireAcknowledgement&&!ack){valid=false;reasonCodes.push('missing_recorded_observation');}
     for(const e of [generated,...available,presented,ack])if(e)sourceEventIds.push(e.eventId);
    }
-   if(valid&&!errors.length&&!interrupted)eligibleContactIds.push(contactId);
+   if(valid&&!errors.length&&!interrupted&&!reservationMissing)eligibleContactIds.push(contactId);
   }
   if(b.objectiveId==='synthetic-group-awareness')for(const group of input.scenario.groupTraining?.groups??[]){
     const report=events.find(e=>e.type==='groupReportSubmitted'&&e.actionDetails?.groupId===group.id);
@@ -40,7 +41,7 @@ export function assessmentIntegrity(input:ScoringInput,policy?:ScoringPolicy):In
     for(const event of [report,observation,presented])if(event)sourceEventIds.push(event.eventId);
   }
   const sufficient=eligibleContactIds.length>=b.eligibility.minimumIndependentResponses;
-  const state=errors.length?'ineligible' as const:interrupted||reasonCodes.includes('presentation_not_established')&&!sufficient?'requires_instructor_review' as const:sufficient?eligibleContactIds.length===b.contactIds.length?'eligible' as const:'partially_eligible' as const:'ineligible' as const;
+  const state=errors.length?'ineligible' as const:reservationMissing||interrupted||reasonCodes.includes('presentation_not_established')&&!sufficient?'requires_instructor_review' as const:sufficient?eligibleContactIds.length===b.contactIds.length?'eligible' as const:'partially_eligible' as const:'ineligible' as const;
   return {competency:b.competency,blueprintId:b.id,state,eligibleContactIds:sufficient?eligibleContactIds:[],reasonCodes:[...new Set(reasonCodes)],sourceEventIds:[...new Set(sourceEventIds)]};
  });
  return {schemaVersion:1,stage:contract.stage,competencies,limitations:['Eligibility is competency-specific and does not change the original numerical rubric score.','Presented information is instrumented UI state, not measured human perception.','Sparse evidence and simulator results do not certify educational transfer or real-world readiness.']};

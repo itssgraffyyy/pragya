@@ -1,0 +1,4 @@
+﻿import { z } from 'zod';
+const strings=z.array(z.string());
+export const evidenceJudgmentSchema=z.object({schemaVersion:z.literal(1),stage:z.string(),contacts:z.array(z.object({contactId:z.string(),correctness:z.enum(['correct','acceptableUnknown','incorrect','missing']),sufficiency:z.enum(['supported','insufficient','unassessable','legacy_unknown']),relevance:z.enum(['relevant','mixed','none','unassessable']),contradiction:z.enum(['none_recorded','unresolved','unassessable']),uncertainty:z.enum(['justified_unknown','unnecessary_abstention','unsupported_certainty','supported_classification','unassessable']),reporting:z.enum(['complete','incomplete','unassessable']),selectedEvidence:strings,availableOpportunityIds:strings,preDecisionObservationIds:strings,postDecisionObservationIds:strings,sourceEventIds:strings,limitations:strings})),limitations:strings}).strict();
+export type EvidenceJudgment=z.infer<typeof evidenceJudgmentSchema>;

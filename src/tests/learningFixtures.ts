@@ -1,10 +1,12 @@
+import { declareAssessment } from '../core/assessGuard/declare';
 import { SimulationEngine } from '../core/sim/engine';
 import { buildSessionExport } from '../core/sim/sessionSummary';
 import { SCENARIO_SINGLE_RECOGNITION } from '../core/scenario/bundled/scenariosA';
 
-export function learningSession(id = 's1', traineeId = 't1', score: 'correct' | 'wrong' = 'correct', day = 1, includeEvidence = score === 'correct') {
-  const engine = new SimulationEngine({ scenario: structuredClone(SCENARIO_SINGLE_RECOGNITION), sessionId: id, traineeId });
+export function learningSession(id = 's1', traineeId = 't1', score: 'correct' | 'wrong' = 'correct', day = 1, includeEvidence = score === 'correct', qualified=false) {
+  const engine = new SimulationEngine({ scenario: qualified?declareAssessment(SCENARIO_SINGLE_RECOGNITION,['classification','evidence','calibration']):structuredClone(SCENARIO_SINGLE_RECOGNITION), sessionId: id, traineeId });
   engine.load(); engine.start(); for (let i=0;i<6;i++) engine.tick(1);
+  if(qualified){engine.presentOpportunity('obs-c1');engine.acknowledgeOpportunity('obs-c1');}
   engine.acknowledgeContact('c1'); engine.setClassification('c1', score === 'correct' ? 'smallMultirotor' : 'birdLike'); engine.setConfidence('c1','high');
   if (includeEvidence) engine.toggleEvidence('c1','rotorSilhouette',true);
   engine.setProceduralResponse('c1', score === 'correct' ? 'recordAndReport' : 'escalateSupervisor'); engine.submitAssessment('c1');

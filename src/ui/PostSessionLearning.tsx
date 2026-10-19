@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { StoredSession } from '../core/persistence/storage';
 import { initStorage } from '../core/persistence/appStorage';
 import { traineeHistory } from '../core/learning/trainees';
@@ -13,7 +13,7 @@ export function PostSessionLearning({session}:{session:StoredSession}){
   const pending=useSimulationStore((s)=>s.learningPending);const revision=useSimulationStore((s)=>s.learningRevision);
   const [name,setName]=useState('');const [insight,setInsight]=useState<string[]>([]);const [next,setNext]=useState<LearningRecommendation|null>(null);const [error,setError]=useState('');const [busy,setBusy]=useState(false);
   useEffect(()=>{let active=true;setNext(null);setName('');if(pending)return;void initStorage().then(async(storage)=>{
-    const profile=await storage.getTrainee(session.summary.traineeId);if(!profile){if(active)setInsight(['This legacy trainee ID has no profile. Create a profile and associate the session explicitly to include it in learning history.']);return;}
+    if(session.summary.traineeId.startsWith('preview:')){if(active)setInsight(['Instructor preview: this synthetic outcome is excluded from trainee learning history.']);return;}const profile=await storage.getTrainee(session.summary.traineeId);if(!profile){if(active)setInsight(['This legacy trainee ID has no profile. Create a profile and associate the session explicitly to include it in learning history.']);return;}
     const h=await traineeHistory(storage,profile);const raw=await storage.getLearningPlan(profile.id);const plan=raw?learningPlanSchema.parse(raw):null;
     const feedback=coachAnswer(profile,h.sessions,plan,'next',new Date().toISOString());
     if(active){setName(profile.displayName);setInsight(feedback.paragraphs);setNext(plan?.recommendations.find((r)=>r.id===feedback.recommendationId)??null);}

@@ -28,7 +28,7 @@ export function coachAnswer(profile:TraineeProfile,sessions:StoredSession[],plan
     }answer.objectives=['evidence-selection'];cite([latest.summary.sessionId]);
   } else if(question==='confidence') {
     const c=latest.assessment!.contacts.filter((c)=>c.assessable&&c.confidence);const highErrors=c.filter((c)=>c.confidence==='high'&&c.classificationOutcome==='incorrect');
-    answer.paragraphs.push(`${c.length} contacts have recorded confidence. ${highErrors.length} were high-confidence incorrect classifications. Saved calibration: ${(latest.assessment!.categories.confidenceCalibration*100).toFixed(1)}%.`,'This compares reported confidence with the saved outcome; it does not diagnose a personal trait.');answer.objectives=['unknown-classification'];cite([latest.summary.sessionId]);
+    answer.paragraphs.push(`${c.length} contacts have recorded confidence. ${highErrors.length} were high-confidence incorrect classifications. Saved calibration: ${(latest.assessment!.categories.confidenceCalibration*100).toFixed(1)}%.`,'This compares reported confidence with the saved outcome; it does not diagnose a personal trait.');if(c.length<3)answer.paragraphs.push('Fewer than three suitable confidence observations: calibration feedback is provisional; no stable calibration conclusion is supported.');answer.objectives=['unknown-classification'];cite([latest.summary.sessionId]);
   } else if(question==='patterns') {
     const patterns=longitudinalPatterns(profile,eligible).filter((p)=>p.state==='possibleRecurringPattern'||p.state==='consistentlyObservedPattern');
     if(!patterns.length)answer.paragraphs.push('Insufficient evidence to establish a recurring pattern. Isolated mistakes are not treated as a personal characteristic.');

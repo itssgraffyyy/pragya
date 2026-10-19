@@ -1,7 +1,7 @@
 import type { GroupReport } from '../core/groups/models';
 import { reconcileAssignment } from '../core/instructor/service';
 import type { ScoringPolicy } from '../core/scoring/policy';
-export interface AssignmentContext { assignmentId:string; unitId:string; policy:ScoringPolicy }
+export interface AssignmentContext { assignmentId?:string; unitId?:string; policy:ScoringPolicy }
 const assignmentContexts=new WeakMap<SimulationEngine,AssignmentContext>();
 import { reconcileLearningSession } from '../core/learning/adaptive';
 import { recordProfileSession } from '../core/learning/trainees';
@@ -275,7 +275,7 @@ function captureSession(engine: SimulationEngine, set: (partial: Partial<Simulat
   const envelope = buildSessionExport(engine,context?.policy);
   capturedSessions.set(engine, envelope);
   set({ learningPending: true });
-  void initStorage().then((storage) => storage.saveSession(envelope).then(() => recordProfileSession(storage, envelope)).then(() => reconcileLearningSession(storage, envelope)).then(()=>context?reconcileAssignment(storage,context.assignmentId,envelope):undefined)).then(() => {
+  void initStorage().then((storage) => storage.saveSession(envelope).then(() => recordProfileSession(storage, envelope)).then(() => reconcileLearningSession(storage, envelope)).then(()=>context?.assignmentId?reconcileAssignment(storage,context.assignmentId,envelope):undefined)).then(() => {
     set({ learningPending: false, learningRevision: useSimulationStore.getState().learningRevision + 1 });
   }).catch((error: unknown) => {
     set({ learningPending: false, lastActionError: `Session or learning update failed: ${error instanceof Error ? error.message : String(error)}` });

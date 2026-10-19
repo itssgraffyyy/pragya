@@ -10,7 +10,7 @@ async function localRecord<T>(page:Page,store:string,key:string):Promise<T>{
 }
 async function importedHistory(page:Page,id:string){
   const p=createProfile('Learning Tester','2026-10-01T00:00:00.000Z',id);const storage=new MemoryStorage();await storage.saveTrainee(p);
-  for(let d=1;d<=3;d++)await storage.saveSession(learningSession(`history-${d}`,id,'wrong',d));const bundle=await exportTrainee(storage,p);
+  for(let d=1;d<=3;d++)await storage.saveSession(learningSession(`history-${d}`,id,'wrong',d,false,true));const bundle=await exportTrainee(storage,p);
   await page.getByTestId('home-trainee-profiles').click();await page.getByLabel('Import profile data').setInputFiles({name:'trainee.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bundle))});
   await expect(page.getByLabel('Profile selector').locator(`option[value="${id}"]`)).toBeAttached();await page.getByLabel('Profile selector').selectOption(id);await expect(page.getByText('Selected: Learning Tester')).toBeVisible();return p;
 }
@@ -22,13 +22,16 @@ async function finishAssigned(page:Page,traineeId:string){
   await expect(page.getByTestId('state-badge')).toHaveText('ready');
   const plan=await localRecord<LearningPlan>(page,'learningPlans',traineeId);const exercise=plan.exercises.find((e)=>e.status==='running')!;expect(exercise).toBeTruthy();
   await page.getByTestId('btn-start').click();
+  await expect(page.getByTestId('training-stage')).toHaveText(exercise.stage==='practice'?'guided_practice':exercise.stage==='evaluation'?'unseen_evaluation':'retention_followup');
+  if(exercise.stage==='practice')await expect(page.getByTestId('practice-guidance')).toBeVisible();else await expect(page.getByTestId('practice-guidance')).toHaveCount(0);
   for(const def of exercise.scenario.contacts){
+    if(exercise.scenario.trainingContract){await expect(page.getByRole('button',{name:`Record observation ${def.id}`,exact:true})).toBeEnabled({timeout:60000});await page.getByRole('button',{name:`Record observation ${def.id}`,exact:true}).click();}
     await page.getByTestId(`contact-row-${def.id}`).click();await expect(page.getByTestId(`btn-ack-${def.id}`)).toBeEnabled({timeout:60000});await page.getByTestId(`btn-ack-${def.id}`).click();
     await page.getByTestId(`select-classification-${def.id}`).selectOption(def.assessment.acceptableClassifications[0]);await page.getByTestId(`btn-confidence-high-${def.id}`).click();
     for(const evidence of def.assessment.requiredEvidence)await page.getByTestId(`check-evidence-${evidence}-${def.id}`).check();
     await page.getByTestId(`select-response-${def.id}`).selectOption(def.assessment.correctResponse);await page.getByTestId(`btn-submit-${def.id}`).click();
   }
-  await expect(page.getByTestId('state-badge')).toHaveText('completed');await page.getByTestId('btn-summary').click();await expect(page.getByTestId('assessment-dashboard')).toBeVisible();await expect(page.getByTestId('post-session-learning').getByRole('status')).toHaveCount(0);
+  await expect(page.getByTestId('state-badge')).toHaveText('completed');await page.getByTestId('btn-summary').click();await expect(page.getByTestId('assessment-dashboard')).toBeVisible();await expect(page.getByTestId('evidence-mind')).toContainText('evidence supported');await expect(page.getByTestId('post-session-learning').getByRole('status')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Start recommended exercise'})).toBeVisible();return exercise;
 }
 

@@ -1,3 +1,4 @@
+import { presentationFamily } from '../evidenceMind/stages';
 import { evaluateProcedural } from '../scoring/procedural';
 import { scenarioDefinitionSchema } from '../scenario/schema';
 import { scoringPolicySchema,type ScoringPolicy,type DecisionNode } from '../scoring/policy';
@@ -16,6 +17,7 @@ export function scenarioQuality(input:unknown,policyInput:unknown):QualityReport
  const scenario=parsed.data as ScenarioDefinition,policy=policyParsed.data as ScoringPolicy,contract=scenario.trainingContract;
  if(!contract)issue('legacy-blueprint','warning','coverage',['trainingContract'],'Declared competency blueprint','Legacy scenario has no opportunity metadata','Preserve legacy playability; declare a new version before making qualified competency claims.');
  else {
+  for(const c of scenario.contacts)if(c.assessment.requiredEvidence.includes('absenceOfFeatures')&&c.assessment.requiredEvidence.length>1)issue(`contradictory-evidence-${c.id}`,'error','configuration',[`contact:${c.id}`],'Required evidence compatible with the canonical contradiction rule','Answer key requires absenceOfFeatures alongside other evidence, which the scorer marks contradictory','Author a consistent evidence key or choose another bounded candidate.');
   const opportunityIds=new Set<string>(),blueprintIds=new Set<string>();
   for(const opportunity of contract.opportunities){
    const ref=`opportunity:${opportunity.id}`,contact=scenario.contacts.find(c=>c.id===opportunity.contactId);
@@ -43,6 +45,9 @@ export function scenarioQuality(input:unknown,policyInput:unknown):QualityReport
    if(b.eligibility.minimumIndependentResponses>b.contactIds.length)issue(`responses-${b.id}`,'error',objective,refs,'Attainable independent-response count','Required count exceeds available contacts','Lower the count or provide appropriate contacts.');
    if(b.uncertainty==='required'&&b.contactIds.some(id=>scenario.contacts.find(c=>c.id===id)?.assessment.minimumConfidence==='high'))issue(`certainty-key-${b.id}`,'error',objective,refs,'Confidence condition compatible with ambiguity','Required high confidence conflicts with uncertainty','Revise the confidence requirement.');
   }
+  if(contract.stage!=='guided_practice'&&contract.assistance.hints)issue('independent-hints','error','assessment-integrity',['assistance'],'Independent stage without hints','Hints enabled outside guided practice','Disable assistance or change the stage.');
+  if(contract.reservation&&(contract.reservation.featureKey!==presentationFamily(scenario)||contract.reservation.priorFeatureKeys.includes(contract.reservation.featureKey)))issue('reservation-integrity','error','assessment-integrity',['reservation'],'A different controlled answer/evidence family','Evaluation repeats prior family or metadata does not match the scenario','Generate a genuinely different supported variant.');
+  if(['unseen_evaluation','retention_followup'].includes(contract.stage)&&!contract.reservation)issue('reservation-unknown','warning','assessment-integrity',['reservation'],'History-checked reserved evaluation variant','No recorded reservation history; unseen status is unverified','Use the adaptive reserved-variant workflow; do not infer unfamiliarity from a new seed.');
   if(contract.assistance.answersExposed&&contract.stage!=='guided_practice')issue('answer-exposure','error','assessment-integrity',['assistance'],'Independent assessment without exposed answers','Answers exposed outside guided practice','Remove answer exposure or change the stage.');
  }
  const nodeIds=new Set<string>();
