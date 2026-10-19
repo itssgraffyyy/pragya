@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import type { curriculumContractSchema } from './curriculum/contract';
 import type { TrainingContract } from './assessGuard/models';
 import type { GroupTraining } from './groups/models';
 /**
@@ -255,6 +257,7 @@ export interface CompletionCondition {
 export interface ScenarioDefinition {
   groupTraining?: GroupTraining;
   trainingContract?: TrainingContract;
+  curriculum?:z.infer<typeof curriculumContractSchema>;
   schemaVersion: number;
   id: string;
   title: string;
@@ -326,6 +329,7 @@ export const SIMULATION_EVENT_TYPES = [
   'opportunityUnavailable',
   'opportunityPresented',
   'opportunityAcknowledged',
+  'groupCuePresented',
   'groupStateChanged',
   'groupObservationRecorded',
   'groupReportSubmitted',

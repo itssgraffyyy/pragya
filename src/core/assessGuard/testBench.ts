@@ -29,6 +29,7 @@ export function controlledSession(scenario:ScenarioDefinition,policy:ScoringPoli
   }
   if(engine.state==='running')for(const group of scenario.groupTraining?.groups??[]){
    const view=engine.traineeView().groups.find(g=>g.id===group.id);
+   if(view?.available&&!view.presented)engine.presentGroupCue(group.id,view.stateId);
    if(view?.available&&!view.report&&engine.simTime>=group.states[group.states.length-1].atTime){engine.recordGroupObservation(group.id,view.members);engine.submitGroupReport(group.id,group.acceptedReports[0],'low');}
   }
  }

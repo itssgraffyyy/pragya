@@ -59,7 +59,7 @@ function valueFor(id:CompetencyId,c:ContactScore,s:StoredSession):number|null {
     case 'calibration': return c.confidence ? c.calibration*100 : null;
     case 'procedure': return c.procedural*100;
     case 'degraded': return conditionsFor(s).degraded ? (c.detection+c.classification+c.evidence+c.procedural)*25 : null;
-    case 'multiContact': return s.summary.scenarioSnapshot.contacts.length>1 ? (c.detection+c.classification+c.evidence+c.procedural)*25 : null;
+    case 'multiContact': return s.summary.scenarioSnapshot.trainingContract?.competencies.some(b=>b.competency==='multiContact'&&b.objectiveId==='synthetic-group-awareness')?(s.assessment?.groupAwareness?.groups.length?avg(s.assessment.groupAwareness.groups.map(g=>g.overall)):null):s.summary.scenarioSnapshot.contacts.length>1 ? (c.detection+c.classification+c.evidence+c.procedural)*25 : null;
     case 'uncertainty': return def?.assessment.acceptableClassifications.includes('unknown') ? c.classification*100 : null;
     case 'reporting': {
       const a=s.events.events.find((e)=>e.contactId===c.contactId && e.type==='assessmentSubmitted');

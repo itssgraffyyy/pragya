@@ -46,7 +46,7 @@ export const storedSessionSchema = z.object({
   const ids=new Set(s.summary.scenarioSnapshot.contacts.map((c)=>c.id));
   if(s.events.events.some(e=>e.scenarioId!==s.summary.scenarioId||e.scenarioVersion!==s.summary.scenarioVersion||(e.contactId&&!ids.has(e.contactId))))ctx.addIssue({code:'custom',message:'Foreign scenario/contact event'});
   if(new Set(s.events.events.map(e=>e.eventId)).size!==s.events.events.length)ctx.addIssue({code:'custom',message:'Duplicate event identifier'});
-  for(const event of s.events.events.filter(e=>['groupStateChanged','groupObservationRecorded','groupReportSubmitted'].includes(e.type))){
+  for(const event of s.events.events.filter(e=>['groupStateChanged','groupCuePresented','groupObservationRecorded','groupReportSubmitted'].includes(e.type))){
     const details=event.actionDetails,group=s.summary.scenarioSnapshot.groupTraining?.groups.find(g=>g.id===details?.groupId),state=group?.states.find(x=>x.id===details?.stateId);
     if(!group||!state||state.atTime>event.simTimestamp)ctx.addIssue({code:'custom',message:'Invalid group event reference/time'});
     if(event.type==='groupReportSubmitted'&&(!groupReportSchema.safeParse(details?.report).success||!['low','medium','high'].includes(String(details?.confidence))))ctx.addIssue({code:'custom',message:'Invalid group report'});

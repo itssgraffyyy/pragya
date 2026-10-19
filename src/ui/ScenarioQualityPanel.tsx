@@ -1,4 +1,4 @@
-﻿import { useEffect,useRef,useState } from 'react';
+import { useEffect,useRef,useState } from 'react';
 import type { LocalActor } from '../core/unit/models';
 import type { CompetencyKey,TrainingContract } from '../core/assessGuard/models';
 import { declareAssessment } from '../core/assessGuard/declare';
@@ -12,7 +12,7 @@ export function ScenarioQualityPanel({text,actor,unitId,onDeclare,onApproved}:{t
  const [report,setReport]=useState<ScenarioBenchReport|null>(null),[error,setError]=useState(''),[rationale,setRationale]=useState(''),[waived,setWaived]=useState<string[]>([]),[busy,setBusy]=useState(false),[approval,setApproval]=useState('');
  const [competency,setCompetency]=useState<CompetencyKey>('classification'),[stage,setStage]=useState<TrainingContract['stage']>('independent_assessment');const latest=useRef(text);latest.current=text;
  useEffect(()=>{setReport(null);setError('');setWaived([]);setApproval('');onApproved(undefined);},[text,onApproved]);
- function declare(){try{const source=scenarioDefinitionSchema.parse(JSON.parse(text));const scenario=declareAssessment({...source,id:`ag-${crypto.randomUUID()}`,title:`${source.title.slice(0,90)} — assessment version`,version:'1.0.0'} as ScenarioDefinition,[competency,'evidence'],stage);onDeclare(scenario);}catch(e){setError(e instanceof Error?e.message:String(e));}}
+ function declare(){try{const source=scenarioDefinitionSchema.parse(JSON.parse(text));const scenario=declareAssessment({...source,curriculum:undefined,id:`ag-${crypto.randomUUID()}`,title:`${source.title.slice(0,90)} — assessment version`,version:'1.0.0'} as ScenarioDefinition,[competency,'evidence'],stage);onDeclare(scenario);}catch(e){setError(e instanceof Error?e.message:String(e));}}
  function run(){try{const source=JSON.parse(text);setReport(scenarioTestBench(source,defaultPolicyFor(source)));setError('');}catch(e){setError(e instanceof Error?e.message:String(e));}}
  async function approve(){setBusy(true);setError('');const snapshot=text;try{const source=scenarioDefinitionSchema.parse(JSON.parse(snapshot));const review=await reviewAssessment(await initStorage(),actor,unitId,source,defaultPolicyFor(source),rationale,waived.map(checkId=>({checkId,rationale})));if(latest.current===snapshot){setApproval(review.approved?`Approved by ${review.authorId}; version ${review.scenarioVersion}; review ${review.id}`:'Review recorded; unresolved checks prevent approval.');onApproved(review.approved?review.id:undefined);}}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}}
  return <section className="panel p-4 my-4 space-y-3" data-testid="scenario-quality"><h3>AssessGuard — scenario quality and instructor review</h3><p>Automated checks are decision support, not educational certification. Legacy scenarios remain playable without invented observation history.</p>

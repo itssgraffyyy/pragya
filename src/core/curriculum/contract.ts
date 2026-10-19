@@ -1,0 +1,5 @@
+﻿import { z } from 'zod';
+import { trainingStageSchema } from '../assessGuard/models';
+export const learningDemandSchema=z.object({contactCount:z.number().int().min(1).max(8),visibility:z.enum(['clear','lightFog','denseFog']),sensorCondition:z.enum(['normal','noisy','blurred','reducedContrast','intermittentLoss','frozen','delayed','missingObservations','falsePositives','sourceDisagreement']),environment:z.enum(['urban','rural']),timeOfDay:z.enum(['day','dusk','night']),reportDetail:z.enum(['basic','observation_references']),stage:trainingStageSchema,durationSeconds:z.number().int().min(60).max(180)}).strict();
+export type LearningDemand=z.infer<typeof learningDemandSchema>;
+export const curriculumContractSchema=z.object({schemaVersion:z.literal(1),objectiveKey:z.string().min(1).max(400),objectiveId:z.string().min(1).max(120),objectiveVersion:z.string().min(1).max(32),requestedSeed:z.number().int().nonnegative(),attempt:z.number().int().min(1).max(8),demand:learningDemandSchema,limitations:z.array(z.string().max(600)).max(30)}).strict();

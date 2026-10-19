@@ -1,4 +1,4 @@
-﻿import type { ScenarioDefinition,EvidenceItem } from '../types';
+import type { ScenarioDefinition,EvidenceItem } from '../types';
 import type { ScoringPolicy } from '../scoring/policy';
 import type { CompetencyKey,TrainingContract } from './models';
 import { defaultPolicyFor } from '../scoring/defaultPolicy';
@@ -6,7 +6,7 @@ const cues:Record<EvidenceItem,string>={rotorSilhouette:'An arm-like rotating ou
 const objectives:Record<CompetencyKey,string>={detection:'basic-recognition',classification:'category-discrimination',evidence:'evidence-selection',calibration:'unknown-classification',procedure:'procedural-response',degraded:'low-visibility-observation',multiContact:'multi-contact-tracking',uncertainty:'unknown-classification',reporting:'evidence-selection',consistency:'category-discrimination'};
 /** Explicit authoring operation, never applied retrospectively to stored legacy sessions. */
 export function declareAssessment(scenario:ScenarioDefinition,competencies:CompetencyKey[]=['classification','evidence'],stage:TrainingContract['stage']='independent_assessment',policy:ScoringPolicy=defaultPolicyFor(scenario)):ScenarioDefinition{
- const copy=structuredClone(scenario);
+ const copy=structuredClone(scenario);copy.scoringRuleRefs=[policy.policyId];
  const opportunities=copy.contacts.map(c=>({id:`obs-${c.id}`,contactId:c.id,channel:'text' as const,atTime:c.spawnTime,until:c.despawnTime===-1?copy.duration:c.despawnTime,cue:(c.assessment.requiredEvidence.length?c.assessment.requiredEvidence:['absenceOfFeatures' as const]).map(e=>cues[e]).join(' '),evidence:[...c.assessment.requiredEvidence]}));
  copy.trainingContract={schemaVersion:1,stage,assistance:{hints:stage==='guided_practice',answersExposed:false},opportunities,competencies:[...new Set(competencies)].map(competency=>({id:`bp-${competency}`,competency,objectiveId:objectives[competency],assessmentMode:stage,behavior:`Record the declared synthetic observations and demonstrate ${competency} in the fictional training workflow.`,contactIds:copy.contacts.map(c=>c.id),requiredOpportunityIds:opportunities.map(o=>o.id),channels:['text'],uncertainty:competency==='uncertainty'?'required':'permitted',acceptedResponses:[...new Set(copy.contacts.map(c=>c.assessment.correctResponse))],policyRef:{id:policy.policyId,version:policy.policyVersion},eligibility:{requirePresentation:true,requireAcknowledgement:['evidence','calibration','uncertainty','reporting'].includes(competency),minimumIndependentResponses:1},limitations:['Scripted synthetic cues and institutional illustrative rubrics; no physical sensor validation or human perception measurement.']}))};
  return copy;

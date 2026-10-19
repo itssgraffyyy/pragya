@@ -13,7 +13,7 @@ export function assessmentIntegrity(input:ScoringInput,policy?:ScoringPolicy):In
   if(errors.length)reasonCodes.push(...errors.map(c=>'quality:'+c.id));
   if(interrupted)reasonCodes.push('interrupted_exercise');
   for(const contactId of b.contactIds){
-   const committed=events.find(e=>e.type==='assessmentSubmitted'&&e.contactId===contactId),lastIndex=committed?events.indexOf(committed):events.length;
+   const committed=b.objectiveId==='synthetic-group-awareness'?events.find(e=>e.type==='groupReportSubmitted'):events.find(e=>e.type==='assessmentSubmitted'&&e.contactId===contactId),lastIndex=committed?events.indexOf(committed):events.length;
    const before=events.slice(0,lastIndex),required=contract.opportunities.filter(o=>o.contactId===contactId&&b.requiredOpportunityIds.includes(o.id));let valid=!!committed&&required.length>0;
    if(!committed)reasonCodes.push('missing_independent_response');else sourceEventIds.push(committed.eventId);
    for(const o of required){
@@ -31,6 +31,13 @@ export function assessmentIntegrity(input:ScoringInput,policy?:ScoringPolicy):In
     for(const e of [generated,...available,presented,ack])if(e)sourceEventIds.push(e.eventId);
    }
    if(valid&&!errors.length&&!interrupted)eligibleContactIds.push(contactId);
+  }
+  if(b.objectiveId==='synthetic-group-awareness')for(const group of input.scenario.groupTraining?.groups??[]){
+    const report=events.find(e=>e.type==='groupReportSubmitted'&&e.actionDetails?.groupId===group.id);
+    const observation=events.find(e=>e.type==='groupObservationRecorded'&&e.actionDetails?.groupId===group.id&&e.actionDetails?.stateId===report?.actionDetails?.stateId&&report&&events.indexOf(e)<events.indexOf(report));
+    const presented=events.find(e=>e.type==='groupCuePresented'&&e.actionDetails?.groupId===group.id&&e.actionDetails?.stateId===report?.actionDetails?.stateId&&e.actionDetails?.instrumentation==='group-text-panel-v1'&&observation&&events.indexOf(e)<events.indexOf(observation));
+    if(!report||!observation){reasonCodes.push('missing_group_response');eligibleContactIds.length=0;}else if(!presented){reasonCodes.push('presentation_not_established');eligibleContactIds.length=0;}
+    for(const event of [report,observation,presented])if(event)sourceEventIds.push(event.eventId);
   }
   const sufficient=eligibleContactIds.length>=b.eligibility.minimumIndependentResponses;
   const state=errors.length?'ineligible' as const:interrupted||reasonCodes.includes('presentation_not_established')&&!sufficient?'requires_instructor_review' as const:sufficient?eligibleContactIds.length===b.contactIds.length?'eligible' as const:'partially_eligible' as const:'ineligible' as const;

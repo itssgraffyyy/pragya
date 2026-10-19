@@ -464,8 +464,8 @@ export class SimulationEngine {
   }
   /** Called only by instrumented visible text UI; does not establish human perception. */
   presentOpportunity(id:string):void{
-    this.assertActionsAllowed();const o=this.scenario.trainingContract?.opportunities.find(x=>x.id===id);
-    if(!o||o.channel!=='text'||!this.opportunityAvailable(o,this._simTime))throw new Error('Instrumented text opportunity is not available');
+    if(!['running','paused'].includes(this._state))return;const o=this.scenario.trainingContract?.opportunities.find(x=>x.id===id);
+    if(!o||o.channel!=='text'||!this.opportunityAvailable(o,this._simTime))return;
     if(this.log.getAll().some(e=>e.type==='opportunityPresented'&&e.actionDetails?.opportunityId===id))return;
     this.appendEvent('opportunityPresented',{opportunityId:id,channel:o.channel,instrumentation:'text-panel-v1'},undefined,o.contactId);
   }
@@ -476,6 +476,11 @@ export class SimulationEngine {
     if(this._assessments.get(o.contactId)?.submitted)throw new Error('Observation must be recorded before the final decision');
     if(this.log.getAll().some(e=>e.type==='opportunityAcknowledged'&&e.actionDetails?.opportunityId===id))return;
     this.appendEvent('opportunityAcknowledged',{opportunityId:id,presentationEventId:presented.eventId},undefined,o.contactId);
+  }
+  presentGroupCue(groupId:string,stateId:string):void{
+    if(!['running','paused'].includes(this._state))return;const view=this.traineeView().groups.find(g=>g.id===groupId);if(!view?.available||view.stateId!==stateId)return;
+    if(this.log.getAll().some(e=>e.type==='groupCuePresented'&&e.actionDetails?.groupId===groupId&&e.actionDetails?.stateId===view.stateId))return;
+    this.appendEvent('groupCuePresented',{groupId,stateId:view.stateId,instrumentation:'group-text-panel-v1'});
   }
   /** Attributable group observation; never substitutes for a person's perception. */
   recordGroupObservation(groupId:string,contactIds:string[]):void{
@@ -571,7 +576,7 @@ export class SimulationEngine {
         const observations=this.log.getAll().filter(e=>e.type==='groupObservationRecorded'&&e.actionDetails?.groupId===group.id&&e.actionDetails?.stateId===state.id);
         const recordedContactIds=[...new Set(observations.flatMap(e=>e.actionDetails?.contactIds as string[]??[]))];
         const report=this.log.getAll().find(e=>e.type==='groupReportSubmitted'&&e.actionDetails?.groupId===group.id)?.actionDetails?.report as GroupReport|undefined;
-        return [{id:group.id,label:group.label,members,available,cue:available?state.cue:'Group information unavailable',stateId:state.id,recordedContactIds,report:report??null}];
+        return [{id:group.id,label:group.label,members,available,presented:this.log.getAll().some(e=>e.type==='groupCuePresented'&&e.actionDetails?.groupId===group.id&&e.actionDetails?.stateId===state.id),cue:available?state.cue:'Group information unavailable',stateId:state.id,recordedContactIds,report:report??null}];
       }),
       simTime: t,
       duration: this.scenario.duration,

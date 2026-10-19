@@ -114,7 +114,7 @@ export function InstructorEditorScreen() {
         <button onClick={doSave} className="border border-console-border px-3 py-1 rounded text-sm" data-testid="editor-save">
           Save
         </button>
-<button onClick={()=>void persist('draft')} className="border p-2">Save draft</button><button onClick={()=>{const result=parseScenarioJson(text);if(!result.valid){setValidation({valid:false,errors:result.errors});return;}const copy={...result.scenario!,id:`custom-${crypto.randomUUID()}`,title:`${result.scenario!.title} (copy)`,version:'1.0.0'};setSelectedId(copy.id);setText(JSON.stringify(copy,null,2));setSaved(null);}}>Duplicate scenario</button><button onClick={()=>void persist('archived')} className="border p-2">Archive scenario</button>
+<button onClick={()=>void persist('draft')} className="border p-2">Save draft</button><button onClick={()=>{const result=parseScenarioJson(text);if(!result.valid){setValidation({valid:false,errors:result.errors});return;}const copy={...result.scenario!,id:`custom-${crypto.randomUUID()}`,title:`${result.scenario!.title} (copy)`,version:'1.0.0'};delete copy.curriculum;setSelectedId(copy.id);setText(JSON.stringify(copy,null,2));setSaved(null);}}>Duplicate scenario</button><button onClick={()=>void persist('archived')} className="border p-2">Archive scenario</button>
         <button onClick={doExport} className="border border-console-border px-3 py-1 rounded text-sm" data-testid="editor-export">
           Export JSON
         </button>

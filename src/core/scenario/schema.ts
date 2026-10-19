@@ -1,3 +1,4 @@
+import { curriculumContractSchema } from '../curriculum/contract';
 import { trainingContractSchema } from '../assessGuard/models';
 import { groupTrainingSchema } from '../groups/models';
 /**
@@ -153,6 +154,7 @@ export const scenarioDefinitionSchema = z
     schemaVersion: z.literal(SCHEMA_VERSION),
     groupTraining: groupTrainingSchema.optional(),
     trainingContract: trainingContractSchema.optional(),
+    curriculum:curriculumContractSchema.optional(),
     id: z.string().min(1).max(80),
     title: z.string().min(1).max(120),
     description: z.string().min(1).max(2000),
