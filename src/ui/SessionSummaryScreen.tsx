@@ -1,3 +1,4 @@
+import { WorkspaceIntro } from './WorkspacePrimitives';
 import { PostSessionLearning } from './PostSessionLearning';
 import { AssessmentDashboard } from './AssessmentDashboard';
 /**
@@ -48,6 +49,7 @@ export function SessionSummaryScreen() {
         </button>
       </div>
 
+      <WorkspaceIntro eyebrow="SESSION DEBRIEF">Review outcomes, distinguish recorded scores from qualified evidence, and choose the next learning step.</WorkspaceIntro>
       <div className="panel p-4 mb-4">
         <div className="grid grid-cols-2 gap-2 text-sm">
           <Field label="Scenario" value={lastSummary.scenarioTitle} />

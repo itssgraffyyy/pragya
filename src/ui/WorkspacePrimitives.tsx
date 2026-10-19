@@ -1,0 +1,4 @@
+﻿/** Shared presentation components; all measurements are supplied by existing services. */
+export function WorkflowSteps({steps,label='Workflow guide'}:{steps:string[];label?:string}){return <ol className="workflow-steps" aria-label={label}>{steps.map((step,i)=><li key={step}><span aria-hidden="true">{String(i+1).padStart(2,'0')}</span><strong>{step}</strong></li>)}</ol>;}
+export function WorkspaceIntro({eyebrow,children}:{eyebrow:string;children:React.ReactNode}){return <div className="workspace-intro"><span className="eyebrow">{eyebrow}</span><p>{children}</p></div>;}
+export function MetricCard({label,value,detail}:{label:string;value:React.ReactNode;detail?:string}){return <article className="metric-card"><span>{label}</span><strong>{value}</strong>{detail&&<small>{detail}</small>}</article>;}

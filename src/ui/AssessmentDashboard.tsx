@@ -44,14 +44,15 @@ export function AssessmentDashboard({ session, historySessions }: { session: Sto
       setPolicy(parsed.policy); setPreview(true); setError('');
     } catch { setError('Enter valid scoring-policy JSON.'); }
   }
-  return <section className="panel p-4 my-4 space-y-4" data-testid="assessment-dashboard">
-    <h3 className="font-semibold text-xl">Decision assessment</h3>
-    <AssessmentIntegrity session={session}/><EvidenceMindPanel session={session}/>
+  return <section className="panel assessment-review p-4 my-4 space-y-4" data-testid="assessment-dashboard">
+    <span className="eyebrow">AFTER-ACTION REVIEW</span><h3 className="font-semibold text-xl">Decision assessment</h3><p className="review-caption">Read the recorded rubric, then check eligibility and supporting observations before drawing a learning conclusion.</p>
+
     <p>{preview ? 'Policy preview' : session.assessment ? 'Recorded assessment' : 'Legacy recalculation (excluded from Skill DNA)'}: {result.policyId}@{result.policyVersion}</p>
-    <p className="text-2xl" data-testid="assessment-overall">Overall: {result.overall.toFixed(1)} / 100</p>
-    <div className="grid grid-cols-2 gap-2">
-      {Object.entries(result.categories).map(([name, value]) => <div key={name}>{name}: {name === 'confidenceCalibration' ? `${(value * 100).toFixed(1)}% (separate metric)` : `${value.toFixed(1)} / 100`}</div>)}
+    <p className="recorded-score" data-testid="assessment-overall">Overall: {result.overall.toFixed(1)} / 100</p>
+    <div className="score-breakdown">
+      {Object.entries(result.categories).map(([name,value])=><div className="score-category" key={name}><p>{name}: {name==='confidenceCalibration'?`${(value*100).toFixed(1)}% (separate metric)`:`${value.toFixed(1)} / 100`}</p><meter min={0} max={100} value={name==='confidenceCalibration'?value*100:value} aria-label={name==='confidenceCalibration'?'Confidence calibration (separate metric)':name}/></div>)}
     </div>
+    <AssessmentIntegrity session={session}/><EvidenceMindPanel session={session}/>
     {result.groupAwareness&&<section data-testid="group-assessment" className="panel p-3"><h4>Synthetic group reporting — separate from contact classification</h4>{result.groupAwareness.groups.length===0&&<p>The selected policy does not define a group-reporting rubric; no group score is inferred.</p>}{result.groupAwareness.groups.map(g=><div key={g.groupId}><p>{g.groupId}: observation completeness {g.observationCompleteness}; attribution {g.attribution}; qualified reporting {g.qualification}; weighted group result {g.overall}/100.</p><p>{g.explanation}</p><p>Rubric {g.policyRef}; recorded sources {g.sourceEventIds.join(', ')||'none'}.</p></div>)}</section>}
     <p>Missed: {result.missedContacts.join(', ') || 'none'}. Unassessable: {result.unassessableContacts.join(', ') || 'none'}.</p>
     <details><summary>Configure scoring policy</summary>

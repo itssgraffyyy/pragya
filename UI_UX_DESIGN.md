@@ -21,3 +21,9 @@ No canonical trajectories, timestamps, sensor/evidence contracts, scoring rubric
 A: shared shell/tokens/navigation. B: contextual dashboard. C: urban/rural world and atmosphere. D: contact models/camera/presets. E: viewport-first console. F: assessment/learning hierarchy. G: institutional workflows. H: screenshot inspection, full regression, offline/accessibility/responsive checks, measured performance and documentation.
 
 Validation, screenshots, commit IDs, remaining issues and performance observations are recorded in VISUAL_QA_REPORT.md as checks complete. Rendering budgets and original asset provenance are recorded in VISUAL_RENDERING.md.
+
+## Assessment and learning hierarchy
+
+The console uses explicit header/guidance/viewport/decision grid areas. Its observation, classification/confidence and evidence/response steps retain all original controls and instrumentation. Guided cues stay visible rather than moving behind disclosure. AAR displays the recorded rubric and category meters first, then AssessGuard eligibility and EvidenceMind's six separate judgment dimensions. Source references expand through native keyboard-accessible details. Confidence calibration remains a separate metric; no new composite is calculated.
+
+WorkflowSteps, WorkspaceIntro and MetricCard provide shared presentation primitives. CurriculumForge and scenario quality use numbered guides, labeled fields, severity findings and a distinct coverage section. Skill DNA retains compatible cohorts and its actual score chart/table; Adaptive Training explains the baseline/practice/evaluation/follow-up sequence. Progress uses a real comparable-measurements table with source-session disclosure. These components consume existing services rather than duplicating their decisions or inventing sample progress.
