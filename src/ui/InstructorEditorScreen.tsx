@@ -99,7 +99,7 @@ export function InstructorEditorScreen() {
           value={selectedId}
           onChange={(e) => loadIntoEditor(e.target.value)}
           className="bg-console-bg border border-console-border rounded px-2 py-1 text-sm"
-          data-testid="editor-scenario-select"
+          aria-label="Source scenario" data-testid="editor-scenario-select"
         >
           {library.map((s) => (
             <option key={s.id} value={s.id}>
@@ -139,7 +139,7 @@ export function InstructorEditorScreen() {
         onChange={(e) => setText(e.target.value)}
         spellCheck={false}
         className="w-full h-[480px] bg-console-bg border border-console-border rounded p-3 font-mono text-xs text-console-text"
-        data-testid="editor-textarea"
+        aria-label="Scenario definition JSON" data-testid="editor-textarea"
       />
 
       <ScenarioQualityPanel text={text} actor={userId?{userId}:null} unitId={unitId} onDeclare={scenario=>{setSelectedId(scenario.id);setText(JSON.stringify(scenario,null,2));setSaved(null);}} onApproved={setApprovalId}/>

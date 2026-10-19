@@ -1,0 +1,98 @@
+
+> pragya@0.1.0 test
+> vitest run --maxWorkers=1 --minWorkers=1
+
+
+ RUN  v2.1.9 G:/projects/pragya
+
+ ✓ src/tests/curriculum.test.ts (13 tests) 583ms
+ ✓ src/tests/assessGuard.test.ts (17 tests) 212ms
+ ✓ src/tests/evidenceMind.test.ts (17 tests) 502ms
+   ✓ EvidenceMind canonical explanation and qualified learning > completes the existing saved adaptive loop with independent progress, no practice pooling and a delayed follow-up gate 310ms
+ ✓ src/tests/backup.test.ts (8 tests) 389ms
+ ❯ src/tests/demo.test.ts (6 tests | 1 failed) 3733ms
+   ✓ calculated synthetic demo and safe reset > refuses to erase added or edited authored work in a demo-owned scenario 463ms
+   × calculated synthetic demo and safe reset > records distinct histories, real corrected outcomes, assignments, crew messages and a valid transferable graph 305ms
+     → expected false to be true // Object.is equality
+   ✓ calculated synthetic demo and safe reset > refuses external references and preserves every record 347ms
+   ✓ calculated synthetic demo and safe reset > cannot mark preexisting records as resettable demo data through a partial backup manifest 780ms
+   ✓ calculated synthetic demo and safe reset > rejects stale reset snapshots and deletes only demo records atomically in memory 716ms
+   ✓ calculated synthetic demo and safe reset > rejects stale reset snapshots and deletes only demo records atomically in indexeddb 1119ms
+ ✓ src/tests/crew.test.ts (9 tests) 137ms
+ ✓ src/tests/engine-workflow.test.ts (13 tests) 15ms
+ ✓ src/tests/instructor.test.ts (5 tests) 85ms
+ ✓ src/tests/unit-analytics.test.ts (7 tests) 230ms
+ ✓ src/tests/adaptive.test.ts (5 tests) 720ms
+   ✓ closed-loop adaptive scenarios > completes real practice and unseen evaluation and resolves the measured target 394ms
+ ✓ src/tests/persistence.test.ts (6 tests) 54ms
+ ✓ src/tests/trainees.test.ts (6 tests) 186ms
+ ✓ src/tests/aar.test.ts (4 tests) 130ms
+ ✓ src/tests/groups.test.ts (5 tests) 40ms
+ ✓ src/tests/blindSpots.test.ts (5 tests) 8ms
+ ✓ src/tests/unit-roles.test.ts (5 tests) 36ms
+ ✓ src/tests/engine-lifecycle.test.ts (11 tests) 13ms
+ ✓ src/tests/motion-lifecycle.test.ts (12 tests) 8ms
+ ✓ src/tests/scoring.test.ts (7 tests) 32ms
+ ✓ src/tests/schema-validation.test.ts (10 tests) 27ms
+ ✓ src/tests/difficulty.test.ts (10 tests) 20ms
+ ✓ src/tests/sensor-degradation.test.ts (10 tests) 14ms
+ ✓ src/tests/assessment.test.ts (5 tests) 21ms
+ ✓ src/tests/instructor-integration.test.ts (1 test) 105ms
+ ✓ src/tests/generator.test.ts (9 tests) 24ms
+ ✓ src/tests/module5-adversarial.test.ts (14 tests) 260ms
+ ✓ src/tests/learning-integration.test.ts (3 tests) 188ms
+ ✓ src/tests/event-log.test.ts (7 tests) 19ms
+ ✓ src/tests/longitudinal.test.ts (6 tests) 148ms
+ ✓ src/tests/offline-server.test.ts (1 test) 610ms
+   ✓ serves a built offline directory without dependencies, rejects traversal and write methods 608ms
+ ✓ src/tests/skillDNA.test.ts (6 tests) 104ms
+ ✓ src/tests/unit-migration.test.ts (1 test) 34ms
+ ✓ src/tests/rng.test.ts (8 tests) 202ms
+ ✓ src/tests/module5-integrity.test.ts (2 tests) 1910ms
+   ✓ Module 5 portable assessment integrity > rejects foreign reservation sources, stage relabeling and changed completed snapshots before complete-backup writes 1612ms
+ ✓ src/tests/progress.test.ts (4 tests) 62ms
+ ✓ src/tests/recommendations.test.ts (4 tests) 263ms
+stdout | src/tests/performance.test.ts > measures exact unit aggregation over 1000 original-engine synthetic sessions
+PRAGYA_CORE_BENCHMARK {"sessions":1000,"trainees":10,"trialsMs":[3843.15,1894.66,3412.81],"medianMs":3412.81,"nodeHeapBeforeMB":43,"nodeHeapAfterMB":137,"nodeWorkerRssMB":200}
+
+stdout | src/tests/performance.test.ts > measures aggregation over 200 declared assessments including 40 group reports
+PRAGYA_QUALIFIED_BENCHMARK {"sessions":200,"groupSessions":40,"trainees":5,"trialsMs":[1042.39,1214.68,1122.24],"medianMs":1122.24,"nodeWorkerRssMB":234,"interpretation":"Declared synthetic histories, not legacy-only extrapolation or hardware certification."}
+
+ ✓ src/tests/performance.test.ts (2 tests) 21383ms
+   ✓ measures exact unit aggregation over 1000 original-engine synthetic sessions 17403ms
+   ✓ measures aggregation over 200 declared assessments including 40 group reports 3977ms
+ ✓ src/tests/coach.test.ts (4 tests) 58ms
+ ✓ src/tests/session-assessment.test.ts (1 test) 23ms
+ ✓ src/tests/publication.test.ts (2 tests) 12ms
+ ✓ src/tests/session-time.test.ts (1 test) 8ms
+ ✓ src/tests/unit-ui.test.tsx (2 tests) 261ms
+ ✓ src/tests/learning-ui.test.tsx (2 tests) 264ms
+ ✓ src/tests/assessment-dashboard.test.tsx (2 tests) 239ms
+
+npm.cmd : ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+At line:2 char:48
++ ... CODE -eq 0){npm.cmd test -- --maxWorkers=1 --minWorkers=1 2>&1 | Tee- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ FAIL  src/tests/demo.test.ts > calculated synthetic demo and safe reset > records distinct histories, real corrected
+outcomes, assignments, crew messages and a valid transferable graph
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/tests/demo.test.ts:24:93
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 43 passed (44)
+      Tests  1 failed | 277 passed (278)
+   Start at  04:07:05
+   Duration  101.27s (transform 4.25s, setup 0ms, collect 22.01s, tests 33.37s, environment 27.29s, prepare 8.21s)

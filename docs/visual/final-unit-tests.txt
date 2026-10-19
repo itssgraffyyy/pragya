@@ -1,0 +1,73 @@
+
+> pragya@0.1.0 test
+> vitest run --maxWorkers=1 --minWorkers=1
+
+
+ RUN  v2.1.9 G:/projects/pragya
+
+ ✓ src/tests/curriculum.test.ts (13 tests) 663ms
+ ✓ src/tests/assessGuard.test.ts (17 tests) 177ms
+ ✓ src/tests/evidenceMind.test.ts (17 tests) 227ms
+ ✓ src/tests/backup.test.ts (8 tests) 707ms
+ ✓ src/tests/demo.test.ts (6 tests) 2645ms
+   ✓ calculated synthetic demo and safe reset > refuses to erase added or edited authored work in a demo-owned scenario 812ms
+   ✓ calculated synthetic demo and safe reset > records distinct histories, real corrected outcomes, assignments, crew messages and a valid transferable graph 412ms
+   ✓ calculated synthetic demo and safe reset > cannot mark preexisting records as resettable demo data through a partial backup manifest 359ms
+   ✓ calculated synthetic demo and safe reset > rejects stale reset snapshots and deletes only demo records atomically in memory 305ms
+   ✓ calculated synthetic demo and safe reset > rejects stale reset snapshots and deletes only demo records atomically in indexeddb 464ms
+ ✓ src/tests/crew.test.ts (9 tests) 278ms
+ ✓ src/tests/engine-workflow.test.ts (13 tests) 32ms
+ ✓ src/tests/instructor.test.ts (5 tests) 86ms
+ ✓ src/tests/unit-analytics.test.ts (7 tests) 225ms
+ ✓ src/tests/adaptive.test.ts (5 tests) 316ms
+ ✓ src/tests/persistence.test.ts (6 tests) 51ms
+ ✓ src/tests/trainees.test.ts (6 tests) 181ms
+ ✓ src/tests/aar.test.ts (4 tests) 274ms
+ ✓ src/tests/groups.test.ts (5 tests) 43ms
+ ✓ src/tests/blindSpots.test.ts (5 tests) 9ms
+ ✓ src/tests/unit-roles.test.ts (5 tests) 41ms
+ ✓ src/tests/engine-lifecycle.test.ts (11 tests) 14ms
+ ✓ src/tests/motion-lifecycle.test.ts (12 tests) 8ms
+ ✓ src/tests/scoring.test.ts (7 tests) 32ms
+ ✓ src/tests/schema-validation.test.ts (10 tests) 48ms
+ ✓ src/tests/difficulty.test.ts (10 tests) 41ms
+ ✓ src/tests/sensor-degradation.test.ts (10 tests) 13ms
+ ✓ src/tests/assessment.test.ts (5 tests) 43ms
+ ✓ src/tests/instructor-integration.test.ts (1 test) 115ms
+ ✓ src/tests/generator.test.ts (9 tests) 24ms
+ ✓ src/tests/module5-adversarial.test.ts (14 tests) 127ms
+ ✓ src/tests/learning-integration.test.ts (3 tests) 110ms
+ ✓ src/tests/event-log.test.ts (7 tests) 19ms
+ ✓ src/tests/longitudinal.test.ts (6 tests) 143ms
+ ✓ src/tests/offline-server.test.ts (1 test) 661ms
+   ✓ serves a built offline directory without dependencies, rejects traversal and write methods 658ms
+ ✓ src/tests/skillDNA.test.ts (6 tests) 76ms
+ ✓ src/tests/unit-migration.test.ts (1 test) 25ms
+ ✓ src/tests/rng.test.ts (8 tests) 76ms
+ ✓ src/tests/module5-integrity.test.ts (2 tests) 1365ms
+   ✓ Module 5 portable assessment integrity > rejects foreign reservation sources, stage relabeling and changed completed snapshots before complete-backup writes 836ms
+   ✓ Module 5 portable assessment integrity > applies the same reservation/source checks to profile-only imports and preserves valid source outcomes 527ms
+ ✓ src/tests/progress.test.ts (4 tests) 114ms
+ ✓ src/tests/recommendations.test.ts (4 tests) 159ms
+stdout | src/tests/performance.test.ts > measures exact unit aggregation over 1000 original-engine synthetic sessions
+PRAGYA_CORE_BENCHMARK {"sessions":1000,"trainees":10,"trialsMs":[3482.37,2075.14,2407.35],"medianMs":2407.35,"nodeHeapBeforeMB":43,"nodeHeapAfterMB":131,"nodeWorkerRssMB":201}
+
+stdout | src/tests/performance.test.ts > measures aggregation over 200 declared assessments including 40 group reports
+PRAGYA_QUALIFIED_BENCHMARK {"sessions":200,"groupSessions":40,"trainees":5,"trialsMs":[999.87,568.65,535.9],"medianMs":568.65,"nodeWorkerRssMB":231,"interpretation":"Declared synthetic histories, not legacy-only extrapolation or hardware certification."}
+
+ ✓ src/tests/performance.test.ts (2 tests) 17533ms
+   ✓ measures exact unit aggregation over 1000 original-engine synthetic sessions 14335ms
+   ✓ measures aggregation over 200 declared assessments including 40 group reports 3197ms
+ ✓ src/tests/coach.test.ts (4 tests) 59ms
+ ✓ src/tests/demo-candidate.test.ts (1 test) 43ms
+ ✓ src/tests/session-assessment.test.ts (1 test) 26ms
+ ✓ src/tests/publication.test.ts (2 tests) 28ms
+ ✓ src/tests/session-time.test.ts (1 test) 17ms
+ ✓ src/tests/unit-ui.test.tsx (2 tests) 202ms
+ ✓ src/tests/learning-ui.test.tsx (2 tests) 255ms
+ ✓ src/tests/assessment-dashboard.test.tsx (2 tests) 201ms
+
+ Test Files  45 passed (45)
+      Tests  279 passed (279)
+   Start at  04:13:06
+   Duration  65.65s (transform 2.60s, setup 0ms, collect 15.70s, tests 27.53s, environment 3.39s, prepare 7.93s)

@@ -1,0 +1,173 @@
+{
+  "qaDate": "2026-10-20 Asia/Calcutta",
+  "qualification": "Actual synthetic-host measurements; no physical GPU, fleet or educational certification.",
+  "records": [
+    {
+      "source": "docs/visual/final-unit-tests.txt",
+      "measurement": "PRAGYA_CORE_BENCHMARK",
+      "sample": {
+        "sessions": 1000,
+        "trainees": 10,
+        "trialsMs": [
+          3482.37,
+          2075.14,
+          2407.35
+        ],
+        "medianMs": 2407.35,
+        "nodeHeapBeforeMB": 43,
+        "nodeHeapAfterMB": 131,
+        "nodeWorkerRssMB": 201
+      }
+    },
+    {
+      "source": "docs/visual/final-unit-tests.txt",
+      "measurement": "PRAGYA_QUALIFIED_BENCHMARK",
+      "sample": {
+        "sessions": 200,
+        "groupSessions": 40,
+        "trainees": 5,
+        "trialsMs": [
+          999.87,
+          568.65,
+          535.9
+        ],
+        "medianMs": 568.65,
+        "nodeWorkerRssMB": 231,
+        "interpretation": "Declared synthetic histories, not legacy-only extrapolation or hardware certification."
+      }
+    },
+    {
+      "source": "docs/visual/initial-final-browser-tests.txt",
+      "measurement": "PRAGYA_BROWSER_RENDER_BENCHMARK",
+      "sample": {
+        "settings": "low graphics / reduced motion",
+        "simulator": {
+          "animationFrameCadenceFps": 20.51,
+          "p95FrameIntervalMs": 83.4,
+          "jsHeapMB": 15,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "logicalCores": 8
+        },
+        "pauseUiMs": 161.17,
+        "crew": {
+          "animationFrameCadenceFps": 55.82,
+          "p95FrameIntervalMs": 16.8,
+          "jsHeapMB": 15,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "logicalCores": 8
+        },
+        "interpretation": "Animation-frame cadence during live canvases, not a physical GPU/display certification. Heap is an approximate Chromium JS sample."
+      }
+    },
+    {
+      "source": "docs/visual/initial-final-browser-tests.txt",
+      "measurement": "PRAGYA_BROWSER_HISTORY_BENCHMARK",
+      "sample": {
+        "sessions": 200,
+        "qualified": false,
+        "groupSessions": 0,
+        "trainees": 5,
+        "backupBytes": 1833958,
+        "validationUiMs": 1847,
+        "restoreUiMs": 300,
+        "analyticsNavigateUiMs": 1217,
+        "nativeIndexedDbSessionCount": 200
+      }
+    },
+    {
+      "source": "docs/visual/initial-final-browser-tests.txt",
+      "measurement": "PRAGYA_BROWSER_HISTORY_BENCHMARK",
+      "sample": {
+        "sessions": 100,
+        "qualified": true,
+        "groupSessions": 20,
+        "trainees": 5,
+        "backupBytes": 1825002,
+        "validationUiMs": 703,
+        "restoreUiMs": 212,
+        "analyticsNavigateUiMs": 532,
+        "nativeIndexedDbSessionCount": 100
+      }
+    },
+    {
+      "source": "docs/visual/initial-final-browser-tests.txt",
+      "measurement": "PRAGYA_GROUP_RENDER_BENCHMARK",
+      "sample": {
+        "scenarioId": "scn-group-independent",
+        "preparedNavigationUiMs": 1334,
+        "contactRows": 3,
+        "sample": {
+          "animationFrameCadenceFps": 22.15,
+          "p95FrameIntervalMs": 83.4,
+          "jsHeapMB": 20,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "logicalCores": 8
+        },
+        "interpretation": "Short software-rendered animation cadence on the measured host, not physical swarm fidelity or laptop-fleet qualification."
+      }
+    },
+    {
+      "source": "docs/visual/initial-final-browser-tests.txt",
+      "measurement": "PRAGYA_GROUP_RENDER_BENCHMARK",
+      "sample": {
+        "scenarioId": "scn-group-coordinated",
+        "preparedNavigationUiMs": 1518,
+        "contactRows": 3,
+        "sample": {
+          "animationFrameCadenceFps": 32,
+          "p95FrameIntervalMs": 66.7,
+          "jsHeapMB": 15,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "logicalCores": 8
+        },
+        "interpretation": "Short software-rendered animation cadence on the measured host, not physical swarm fidelity or laptop-fleet qualification."
+      }
+    },
+    {
+      "source": "docs/visual/initial-final-browser-tests.txt",
+      "measurement": "PRAGYA_QUALITY_BUDGET_SAMPLES",
+      "sample": [
+        {
+          "preset": "low",
+          "cadenceFps": 22,
+          "engine": "three.js r169",
+          "cosmeticTime": "5.6831000000000005",
+          "drawCalls": "22",
+          "triangles": "10588",
+          "geometries": "22",
+          "textures": "1",
+          "cameraDistance": "182.57",
+          "camera": "16.00,48.00,115.00"
+        },
+        {
+          "preset": "medium",
+          "cadenceFps": 7,
+          "engine": "three.js r169",
+          "cosmeticTime": "5.6831000000000005",
+          "drawCalls": "22",
+          "triangles": "17272",
+          "geometries": "22",
+          "textures": "2",
+          "cameraDistance": "182.57",
+          "camera": "16.00,48.00,115.00"
+        },
+        {
+          "preset": "high",
+          "cadenceFps": 6,
+          "engine": "three.js r169",
+          "cosmeticTime": "5.6831000000000005",
+          "drawCalls": "22",
+          "triangles": "19832",
+          "geometries": "22",
+          "textures": "2",
+          "cameraDistance": "182.57",
+          "camera": "16.00,48.00,115.00"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+
+> pragya@0.1.0 test:e2e
+> playwright test src/tests/e2e/module5.spec.ts src/tests/e2e/visual.spec.ts --grep captures real|AssessGuard validates|AssessGuard exposes|synthetic group awareness
+
+npm.cmd : [WebServer] (node:13740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:2 char:161
++ ... CODE -eq 0){npm.cmd run test:e2e -- src/tests/e2e/module5.spec.ts src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([WebServer] (no... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+(node:14376) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:14376) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › src\tests\e2e\module5.spec.ts:10:1 › synthetic group awareness records current contact references and replays qualified scoring offline (15.6s)
+  ok 2 [chromium] › src\tests\e2e\module5.spec.ts:18:1 › AssessGuard validates and approves a declared exercise offline, records real observations and preserves its eligibility on reload (15.5s)
+  ok 3 [chromium] › src\tests\e2e\module5.spec.ts:25:1 › AssessGuard exposes a deliberately defective declared assessment and blocks unreviewed publication offline (2.2s)
+  ok 4 [chromium] › src\tests\e2e\visual.spec.ts:4:1 › captures real application visual QA and checks desktop overflow (2.2m)
+
+  4 passed (2.8m)
