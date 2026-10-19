@@ -87,12 +87,11 @@ export function SimulationConsoleScreen() {
   return (
     <div className="console-grid">
       <SimClockDriver />
-      {view.guidance&&<aside className="col-span-full panel p-2" data-testid="practice-guidance">{view.guidance}</aside>}
+      {view.guidance&&<aside className="console-guidance panel p-2" data-testid="practice-guidance">{view.guidance}</aside>}
 
       {/* Top bar */}
-      <header className="col-span-full flex items-center gap-3 px-4 bg-console-panel border-b border-console-border">
-        <span className="font-semibold text-console-accent">PRAGYA</span><span data-testid="training-stage">{view.trainingStage}</span>
-        <span className="text-sm text-console-muted truncate">{view.title}</span>
+      <header className="console-header flex items-center gap-3 px-4 bg-console-panel border-b border-console-border">
+        <div className="console-title"><strong>{view.title}</strong><small>{view.environment} / {view.timeOfDay} / {view.visibility} / {view.weather}</small></div><span className="stage-badge" data-testid="training-stage">{view.trainingStage}</span>
         <span className="ml-auto font-mono text-sm" data-testid="sim-clock">
           T+{formatClock(view.simTime)} / {formatClock(view.duration)}
         </span>
@@ -127,7 +126,7 @@ export function SimulationConsoleScreen() {
       </header>
 
       {/* 3D viewport */}
-      <div className="relative min-h-0" data-testid="sim-viewport">
+      <div className="console-viewport relative min-h-0" data-testid="sim-viewport">
         <SimScene
           view={view}
           selectedContactId={selectedId}
@@ -162,8 +161,8 @@ export function SimulationConsoleScreen() {
       </div>
 
       {/* Right panel: contacts + assessment */}
-      <aside className="min-h-0 overflow-y-auto bg-console-panel border-l border-console-border p-3 flex flex-col gap-3">
-        {view.opportunities.map(o=><OpportunityPanel key={o.id} opportunity={o}/> )}
+      <aside aria-label="Observation and decision workspace" className="console-decisions min-h-0 overflow-y-auto bg-console-panel border-l border-console-border p-3 flex flex-col gap-3">
+        <div className="decision-guide"><span>OBSERVE</span><span>ASSESS</span><span>REPORT</span></div>{view.opportunities.map(o=><OpportunityPanel key={o.id} opportunity={o}/> )}
         {view.groups.map(group=><GroupObservationPanel key={group.id} group={group} interactive={interactive}/>)}
         {/* Sensor status (trainee-facing wording only) */}
         <section className="panel p-2" data-testid="sensor-status">
@@ -191,6 +190,7 @@ export function SimulationConsoleScreen() {
           </ul>
         </section>
 
+        {!selected&&<p className="selection-hint">Select a contact to record a decision. Sensor status describes the feed; verify available observations before committing.</p>}
         {/* Assessment panel */}
         {selected && interactive && (
           <AssessmentPanel contact={selected} />
@@ -256,6 +256,7 @@ function ContactRow({
         className={`w-full text-left px-2 py-1 rounded border text-sm ${
           selected ? 'border-console-accent bg-console-accent/10' : 'border-console-border'
         } ${known ? '' : 'opacity-40'}`}
+        aria-pressed={selected}
         data-testid={`contact-row-${contact.id}`}
       >
         <span className="font-mono mr-2">{contact.id}</span>
@@ -286,6 +287,7 @@ function AssessmentPanel({ contact }: { contact: TraineeContactView }) {
         Assessment — <span className="font-mono">{id}</span>
       </h3>
 
+      <p className="decision-step">01 / Detection and verification</p>
       {/* Step 1: observation workflow */}
       <div className="flex flex-wrap gap-1">
         <button
@@ -316,6 +318,7 @@ function AssessmentPanel({ contact }: { contact: TraineeContactView }) {
         </button>
       </div>
 
+      <p className="decision-step">02 / Classification and confidence</p>
       {/* Step 2: classification */}
       <label className="text-xs text-console-muted">
         Classification
@@ -323,6 +326,7 @@ function AssessmentPanel({ contact }: { contact: TraineeContactView }) {
           value={a.classification ?? ''}
           onChange={(e) => store.getState().classify(id, e.target.value)}
           className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1 text-sm text-console-text"
+          aria-label={`Classification for ${id}`}
           data-testid={`select-classification-${id}`}
         >
           <option value="" disabled>
@@ -347,6 +351,7 @@ function AssessmentPanel({ contact }: { contact: TraineeContactView }) {
               className={`text-xs border px-2 py-0.5 rounded capitalize ${
                 a.confidence === c ? 'border-console-accent text-console-accent' : 'border-console-border'
               }`}
+              aria-pressed={a.confidence===c}
               data-testid={`btn-confidence-${c}-${id}`}
             >
               {c}
@@ -355,6 +360,7 @@ function AssessmentPanel({ contact }: { contact: TraineeContactView }) {
         </div>
       </div>
 
+      <p className="decision-step">03 / Evidence and procedural response</p>
       {/* Step 4: evidence */}
       <div>
         <div className="text-xs text-console-muted mb-1">Supporting observations</div>
@@ -380,6 +386,7 @@ function AssessmentPanel({ contact }: { contact: TraineeContactView }) {
           value={a.proceduralResponse ?? ''}
           onChange={(e) => store.getState().selectResponse(id, e.target.value)}
           className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1 text-sm text-console-text"
+          aria-label={`Procedural response for ${id}`}
           data-testid={`select-response-${id}`}
         >
           <option value="" disabled>

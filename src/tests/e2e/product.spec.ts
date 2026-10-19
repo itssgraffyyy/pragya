@@ -16,3 +16,8 @@ test('quality budgets and camera reset preserve the paused canonical clock',asyn
   const sample=await page.evaluate(async()=>{const times:number[]=[];await new Promise<void>(resolve=>{const next=(t:number)=>{times.push(t);if(times.length<61)requestAnimationFrame(next);else resolve();};requestAnimationFrame(next);});const canvas=document.querySelector('canvas')!;return {cadenceFps:Math.round(60000/(times[60]-times[0])),...canvas.dataset};});samples.push({preset,...sample});await page.screenshot({path:`docs/visual/after/quality-${preset}.png`,fullPage:true});
  }console.log('PRAGYA_QUALITY_BUDGET_SAMPLES',JSON.stringify(samples));
 });
+
+test('decision console stays usable at all requested desktop sizes',async({page})=>{
+ await mkdir('docs/visual/after',{recursive:true});await page.goto('/');await page.getByTestId('home-scenario-selection').click();await page.getByTestId('begin-scn-single-recognition').click();await page.getByTestId('btn-start').click();await page.getByTestId('contact-row-c1').click();await expect(page.getByTestId('btn-ack-c1')).toBeEnabled({timeout:60000});
+ for(const [width,height] of [[1366,768],[1440,900],[1920,1080]]){await page.setViewportSize({width,height});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);const viewport=await page.getByTestId('sim-viewport').boundingBox();expect(viewport!.width).toBeGreaterThan(600);expect(viewport!.height).toBeGreaterThan(400);await page.getByTestId('btn-submit-c1').scrollIntoViewIfNeeded();await expect(page.getByTestId('btn-submit-c1')).toBeVisible();await page.getByTestId('sensor-status').scrollIntoViewIfNeeded();await page.screenshot({path:`docs/visual/after/console-${width}.png`,fullPage:true});}
+});
