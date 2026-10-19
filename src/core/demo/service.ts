@@ -1,3 +1,4 @@
+import { comparableDemoSeed } from './candidate';
 import { stableKey } from '../learning/skillDNA';
 import { initializeCatalogue,approveObjectiveVersion } from '../curriculum/objectiveService';
 import { createCurriculumCandidate,approveAndPublishCandidate,assignCurriculumCandidate } from '../curriculum/service';
@@ -40,7 +41,7 @@ export async function installDemo(storage:StorageAdapter,actor:LocalActor|null=n
  const catalogue=await initializeCatalogue(scratch,instructor,unit.id),objective=catalogue.find(o=>o.definition.objectiveId==='category-discrimination')!;
  const rationale='[Synthetic demo] Instructor reviewed the synthetic observations, declared recognition objective and illustrative response rubric.';
  await approveObjectiveVersion(scratch,instructor,objective.id,rationale);
- const candidate=await createCurriculumCandidate(scratch,instructor,unit.id,{objectiveKey:objective.id,traineeIds:[profiles[0].id],seed:505,demand:DEFAULT_LEARNING_DEMAND,maxAttempts:8});
+ const candidate=await createCurriculumCandidate(scratch,instructor,unit.id,{objectiveKey:objective.id,traineeIds:[profiles[0].id],seed:comparableDemoSeed(objective.id,objective.definition,defaultPolicyFor(SCENARIO_SINGLE_RECOGNITION)),demand:DEFAULT_LEARNING_DEMAND,maxAttempts:8});
  await approveAndPublishCandidate(scratch,instructor,candidate.id,rationale);
  const [baselineAssignment]=await assignCurriculumCandidate(scratch,instructor,candidate.id);
  const baselineStarted=await startAssignment(scratch,{userId:users[0].id},baselineAssignment.id);
