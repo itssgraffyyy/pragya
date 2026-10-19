@@ -1,3 +1,4 @@
+import { scoreGroupReports } from './groupReporting';
 /** PRAGYA Module 2 — session scorer (aggregates per-contact scores). */
 
 import { parseScoringPolicy, type ScoringPolicy } from './policy';
@@ -87,6 +88,7 @@ export function scoreSession(input: ScoringInput, policy: ScoringPolicy): Assess
   const calibration = avg((c) => c.calibration);
 
   return {
+    ...(input.scenario.groupTraining?{groupAwareness:{schemaVersion:1 as const,groups:scoreGroupReports(input,policy)}}:{}),
     sessionId: input.sessionId,
     traineeId: input.traineeId,
     scenarioId: input.scenario.id,

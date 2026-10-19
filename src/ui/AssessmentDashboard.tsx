@@ -49,6 +49,7 @@ export function AssessmentDashboard({ session, historySessions }: { session: Sto
     <div className="grid grid-cols-2 gap-2">
       {Object.entries(result.categories).map(([name, value]) => <div key={name}>{name}: {name === 'confidenceCalibration' ? `${(value * 100).toFixed(1)}% (separate metric)` : `${value.toFixed(1)} / 100`}</div>)}
     </div>
+    {result.groupAwareness&&<section data-testid="group-assessment" className="panel p-3"><h4>Synthetic group reporting — separate from contact classification</h4>{result.groupAwareness.groups.length===0&&<p>The selected policy does not define a group-reporting rubric; no group score is inferred.</p>}{result.groupAwareness.groups.map(g=><div key={g.groupId}><p>{g.groupId}: observation completeness {g.observationCompleteness}; attribution {g.attribution}; qualified reporting {g.qualification}; weighted group result {g.overall}/100.</p><p>{g.explanation}</p><p>Rubric {g.policyRef}; recorded sources {g.sourceEventIds.join(', ')||'none'}.</p></div>)}</section>}
     <p>Missed: {result.missedContacts.join(', ') || 'none'}. Unassessable: {result.unassessableContacts.join(', ') || 'none'}.</p>
     <details><summary>Configure scoring policy</summary>
       <label className="block">Sample policy <select aria-label="Sample scoring policy" className="bg-console-bg border p-1" value="" onChange={(e) => {
@@ -73,8 +74,9 @@ export function AssessmentDashboard({ session, historySessions }: { session: Sto
       {frames.length > 0 ? <>
         <label>Replay event <input aria-label="Replay event" type="range" min="0" max={frames.length - 1} value={frameIndex} onChange={(e) => setFrameIndex(Number(e.target.value))} /></label>
         {frame && <div data-testid="replay-frame"><p>T+{frame.event.simTimestamp}s: {frame.event.type} {frame.event.contactId}</p>
-          <p>Logged decision-time observations:</p><ul>{frame.observations.map((e) => <li key={e.eventId}>T+{e.simTimestamp}: {e.type} {e.evidence?.join(', ')} {e.sensorState && JSON.stringify(e.sensorState)}</li>)}</ul>
-          {frame.decision && <p>Submitted: {frame.decision.classification}; confidence: {frame.decision.confidence}; evidence: {frame.decision.evidence?.join(', ') || 'none'}; procedure: {frame.decision.proceduralResponse}.</p>}
+          <p>Logged decision-time observations:</p><ul>{frame.observations.map((e) => <li key={e.eventId}>T+{e.simTimestamp}: {e.type} {e.evidence?.join(', ')} {e.sensorState && JSON.stringify(e.sensorState)} {e.type.startsWith('group')&&JSON.stringify(e.actionDetails)}</li>)}</ul>
+          {frame.decision?.type==='groupReportSubmitted'&&<p>Group report: {JSON.stringify(frame.decision.actionDetails)}</p>}
+          {frame.decision && frame.decision.type!=='groupReportSubmitted' && <p>Submitted: {frame.decision.classification}; confidence: {frame.decision.confidence}; evidence: {frame.decision.evidence?.join(', ') || 'none'}; procedure: {frame.decision.proceduralResponse}.</p>}
         </div>}
       </> : <p>No logged events available.</p>}
     </div>

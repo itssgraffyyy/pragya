@@ -1,3 +1,4 @@
+import type { GroupScore } from '../groups/models';
 /**
  * PRAGYA Module 2 — Scoring result types.
  * Structured assessment outputs; deterministic for identical inputs.
@@ -44,6 +45,7 @@ export interface ContactScore {
 }
 
 export interface AssessmentResult {
+  groupAwareness?: {schemaVersion:1;groups:GroupScore[]};
   sessionId: string;
   traineeId: string;
   scenarioId: string;

@@ -1,3 +1,4 @@
+import { GROUP_EXAMPLES } from './scenariosGroup';
 /**
  * Bundled scenario library index.
  * Every bundled scenario is validated at module load — if one fails, the
@@ -24,6 +25,7 @@ const RAW_SCENARIOS: ScenarioDefinition[] = [
   SCENARIO_AMBIGUOUS,
   SCENARIO_CONFLICTING_SOURCES,
   SCENARIO_MIXED_EVIDENCE,
+  ...GROUP_EXAMPLES,
 ];
 
 // Validate all bundled scenarios eagerly; developer mistakes fail fast.

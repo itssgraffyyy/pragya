@@ -1,3 +1,4 @@
+import { groupReportingPolicySchema } from '../groups/models';
 /**
  * PRAGYA Module 2 — Scoring policy schema (versioned, Zod-validated).
  *
@@ -78,6 +79,7 @@ export const scoringPolicySchema = z
   .object({
     schemaVersion: z.literal(SCORING_POLICY_VERSION),
     policyId: z.string().min(1).max(80),
+    groupReporting: groupReportingPolicySchema.optional(),
     policyVersion: z.string().min(1).max(32),
     title: z.string().min(1).max(120),
     description: z.string().min(1).max(2000),

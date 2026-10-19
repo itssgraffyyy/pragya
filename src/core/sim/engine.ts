@@ -1,3 +1,5 @@
+import { groupStateAt,groupOffset } from '../groups/projection';
+import { groupReportSchema,type GroupReport,type GroupView } from '../groups/models';
 /**
  * PRAGYA simulation engine (headless).
  *
@@ -62,6 +64,7 @@ export interface TraineeContactView {
 
 /** Trainee-facing snapshot of the whole scenario. */
 export interface TraineeView {
+  groups: GroupView[];
   simTime: number;
   duration: number;
   state: SimulationState;
@@ -98,6 +101,7 @@ export class SimulationEngine {
   private _simTime = 0;
   private _assessments = new Map<string, ContactAssessment>();
   private _timedEventsFired = new Set<string>();
+  private _groupStatesFired = new Set<string>();
   private _error: string | null = null;
   /** Last known rendered positions (for frozen/delayed feeds). */
   private _lastPositions = new Map<string, Vec3>();
@@ -180,6 +184,7 @@ export class SimulationEngine {
     this.transition('idle');
     this._simTime = 0;
     this._timedEventsFired.clear();
+    this._groupStatesFired.clear();
     this._lastPositions.clear();
     this._error = null;
     this.startedAtIso = null;
@@ -268,6 +273,11 @@ export class SimulationEngine {
           this._timedEventsFired.add(te.id);
           this.applyTimedEvent(te.id, te.type, te.data);
         }
+      }
+    }
+    for(const group of this.scenario.groupTraining?.groups??[])for(const state of group.states){
+      if(state.atTime<=currTime&&!this._groupStatesFired.has(state.id)){
+        this._groupStatesFired.add(state.id);this.appendEvent('groupStateChanged',{groupId:group.id,stateId:state.id,members:state.members,formation:state.formation,scheduledAt:state.atTime});
       }
     }
     this.updateLastPositions(currTime);
@@ -435,8 +445,26 @@ export class SimulationEngine {
     }
   }
 
+  /** Attributable group observation; never substitutes for a person's perception. */
+  recordGroupObservation(groupId:string,contactIds:string[]):void{
+    this.assertActionsAllowed();const view=this.traineeView().groups.find(g=>g.id===groupId);
+    if(!view?.available)throw new Error('Group information is not currently available');
+    if(!contactIds.length||new Set(contactIds).size!==contactIds.length||contactIds.some(id=>!view.members.includes(id)||!this._assessments.get(id)?.acknowledged))throw new Error('Reference distinct, acknowledged current contacts');
+    if(view.report)throw new Error('Group report already committed');
+    this.appendEvent('groupObservationRecorded',{groupId,stateId:view.stateId,contactIds});
+  }
+  submitGroupReport(groupId:string,report:GroupReport,confidence:ConfidenceLevel):void{
+    this.assertActionsAllowed();groupReportSchema.parse(report);
+    if(!['low','medium','high'].includes(confidence))throw new Error('Invalid group confidence');
+    const view=this.traineeView().groups.find(g=>g.id===groupId);
+    if(!view?.available||!view.recordedContactIds.length)throw new Error('Record available group observations before reporting');
+    if(view.report)throw new Error('Group report already committed');
+    this.appendEvent('groupReportSubmitted',{groupId,stateId:view.stateId,report,confidence,contactIds:view.recordedContactIds});
+    if(this.completionSatisfied())this.complete();
+  }
   /** True when the scenario's completion conditions are satisfied. */
   completionSatisfied(): boolean {
+    if((this.scenario.groupTraining?.groups??[]).some(g=>!this.log.getAll().some(e=>e.type==='groupReportSubmitted'&&e.actionDetails?.groupId===g.id)))return false;
     const submitted = this.submittedAssessments().length;
     const c = this.scenario.completion;
     if (c.requireAllContactsAssessed && submitted < this.scenario.contacts.length) return false;
@@ -481,8 +509,9 @@ export class SimulationEngine {
       const visibility = observableVisibility(def, t, primaryFeed);
       const position =
         visibility === 'visible' || visibility === 'occluded'
-          ? this.displayPosition(def, primaryFeed, t)
+          ? ([...this.displayPosition(def, primaryFeed, t)] as Vec3)
           : null;
+      if(position){const offset=groupOffset(this.scenario.groupTraining,def.id,Math.max(0,t-primaryFeed.delaySeconds));position[0]+=offset[0];position[1]+=offset[1];position[2]+=offset[2];}
       return {
         id: def.id,
         category: def.category,
@@ -501,6 +530,15 @@ export class SimulationEngine {
       feedStates.secondary = rawFeedState(this.scenario.sensor, 'secondary', t);
     }
     return {
+      groups:(this.scenario.groupTraining?.groups??[]).flatMap(group=>{
+        const state=groupStateAt(group,t);if(!state)return [];
+        const members=state.members.filter(id=>contacts.some(c=>c.id===id&&c.visibility==='visible'&&c.position!==null&&this.contactDef(id).observable));
+        const available=primaryFeed.feedLive&&members.length>=2;
+        const observations=this.log.getAll().filter(e=>e.type==='groupObservationRecorded'&&e.actionDetails?.groupId===group.id&&e.actionDetails?.stateId===state.id);
+        const recordedContactIds=[...new Set(observations.flatMap(e=>e.actionDetails?.contactIds as string[]??[]))];
+        const report=this.log.getAll().find(e=>e.type==='groupReportSubmitted'&&e.actionDetails?.groupId===group.id)?.actionDetails?.report as GroupReport|undefined;
+        return [{id:group.id,label:group.label,members,available,cue:available?state.cue:'Group information unavailable',stateId:state.id,recordedContactIds,report:report??null}];
+      }),
       simTime: t,
       duration: this.scenario.duration,
       state: this._state,

@@ -1,3 +1,4 @@
+import { groupTrainingSchema } from '../groups/models';
 /**
  * Zod schema for scenario definitions (schemaVersion 1).
  *
@@ -149,6 +150,7 @@ export const timedEventSchema = z
 export const scenarioDefinitionSchema = z
   .object({
     schemaVersion: z.literal(SCHEMA_VERSION),
+    groupTraining: groupTrainingSchema.optional(),
     id: z.string().min(1).max(80),
     title: z.string().min(1).max(120),
     description: z.string().min(1).max(2000),
@@ -195,6 +197,16 @@ export const scenarioDefinitionSchema = z
   })
   .strict()
   .superRefine((s, ctx) => {
+    const groupIds=new Set<string>(),stateIds=new Set<string>();
+    for(const [index,group] of (s.groupTraining?.groups??[]).entries()){
+      if(groupIds.has(group.id))ctx.addIssue({code:'custom',path:['groupTraining','groups',index,'id'],message:'Duplicate group id'});groupIds.add(group.id);
+      let previous=-1;
+      for(const state of group.states){
+        if(stateIds.has(state.id)||state.atTime<=previous||state.atTime>=s.duration||new Set(state.members).size!==state.members.length)ctx.addIssue({code:'custom',path:['groupTraining'],message:'Group states require unique IDs, increasing times and distinct members within scenario duration'});
+        stateIds.add(state.id);previous=state.atTime;
+        if(state.members.some(id=>!s.contacts.some(c=>c.id===id)))ctx.addIssue({code:'custom',path:['groupTraining'],message:'Group references an unknown contact'});
+      }
+    }
     // Cross-field semantic checks beyond shape validation.
     const ids = new Set<string>();
     s.contacts.forEach((c, i) => {

@@ -1,3 +1,4 @@
+import { GroupObservationPanel } from './GroupObservationPanel';
 /**
  * Simulation Console — trainee-facing exercise screen.
  *
@@ -160,6 +161,7 @@ export function SimulationConsoleScreen() {
 
       {/* Right panel: contacts + assessment */}
       <aside className="min-h-0 overflow-y-auto bg-console-panel border-l border-console-border p-3 flex flex-col gap-3">
+        {view.groups.map(group=><GroupObservationPanel key={group.id} group={group} interactive={interactive}/>)}
         {/* Sensor status (trainee-facing wording only) */}
         <section className="panel p-2" data-testid="sensor-status">
           <h3 className="text-xs uppercase tracking-wide text-console-muted mb-1">Sensor status</h3>

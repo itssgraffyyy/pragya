@@ -16,8 +16,8 @@ export function decisionReplay(input: ScoringInput): DecisionReplayFrame[] {
     seen.push(event);
     return {
       event,
-      observations: seen.filter((e) => e.type === 'sensorStateChanged' || e.type === 'environmentChanged' || (e.contactId === event.contactId && ['contactBecameVisible', 'contactOccluded', 'evidenceSelected', 'evidenceDeselected', 'verificationRequested'].includes(e.type))),
-      decision: event.type === 'assessmentSubmitted' ? event : null,
+      observations: seen.filter((e) => e.type === 'sensorStateChanged' || e.type === 'environmentChanged' || (['groupStateChanged','groupObservationRecorded'].includes(e.type) && e.actionDetails?.groupId === event.actionDetails?.groupId) || (e.contactId === event.contactId && ['contactBecameVisible', 'contactOccluded', 'evidenceSelected', 'evidenceDeselected', 'verificationRequested'].includes(e.type))),
+      decision: event.type === 'assessmentSubmitted' || event.type === 'groupReportSubmitted' ? event : null,
     };
   });
 }

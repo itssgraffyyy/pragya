@@ -1,7 +1,7 @@
 import type { ScoringPolicy } from '../scoring/policy';
 import type { StoredSession } from '../persistence/storage';
 import { assessStoredSession } from '../scoring/storedSession';
-import { POLICY_BASIC_RECOGNITION } from '../scoring/samplePolicies';
+import { defaultPolicyFor } from '../scoring/defaultPolicy';
 /**
  * Session summary builder.
  *
@@ -64,7 +64,7 @@ export interface SessionExportEnvelope extends StoredSession {
   events: ReturnType<SimulationEngine['log']['export']>;
 }
 
-export function buildSessionExport(engine: SimulationEngine, policy: ScoringPolicy = POLICY_BASIC_RECOGNITION): SessionExportEnvelope {
+export function buildSessionExport(engine: SimulationEngine, policy: ScoringPolicy = defaultPolicyFor(engine.scenario)): SessionExportEnvelope {
   const session: StoredSession = { summary: buildSessionSummary(engine), events: engine.log.export() };
   return {
     ...session,

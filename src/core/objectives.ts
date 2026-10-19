@@ -11,6 +11,7 @@ export interface LearningObjectiveDef {
 }
 
 export const LEARNING_OBJECTIVES: LearningObjectiveDef[] = [
+  { id: 'synthetic-group-awareness', label: 'Qualify synthetic group observations without unsupported claims', family: 'multiContact' },
   { id: 'basic-recognition', label: 'Recognize a single basic aerial contact', family: 'recognition' },
   { id: 'category-discrimination', label: 'Discriminate multirotor vs fixed-wing vs bird-like contacts', family: 'recognition' },
   { id: 'low-visibility-observation', label: 'Maintain observation under reduced visibility', family: 'uncertainty' },

@@ -1,9 +1,10 @@
+import { defaultPolicyFor } from '../scoring/defaultPolicy';
 import type { StorageAdapter,StoredSession } from '../persistence/storage';
 import type { LocalActor,TrainingRecords } from '../unit/models';
 import { trainingSchemas } from '../unit/models';
 import { authorize,records,writeRecord,authorizedHistory } from '../unit/service';
 import { stableKey } from '../learning/skillDNA';
-import { POLICY_BASIC_RECOGNITION } from '../scoring/samplePolicies';
+
 import { scoringPolicySchema,type ScoringPolicy } from '../scoring/policy';
 import { scenarioDefinitionSchema } from '../scenario/schema';
 import { BUNDLED_SCENARIOS } from '../scenario/bundled';
@@ -34,7 +35,7 @@ export async function assignTraining(storage:StorageAdapter,actor:LocalActor,uni
  const scenario=(await scenarioLibrary(storage,unitId)).find(s=>s.id===input.scenarioId);if(!scenario)throw new Error('Published scenario required');
  const policyRecord=input.policyKey?(await records(storage,'policies')).find(p=>p.id===input.policyKey&&p.unitId===unitId):null;if(input.policyKey&&!policyRecord)throw new Error('Policy version not found in this unit');
  const previous=input.supersedes?(await records(storage,'assignments')).find(a=>a.id===input.supersedes&&a.unitId===unitId):null;if(input.supersedes&&(!previous||!['incomplete','cancelled'].includes(previous.status)||targets.length!==1||targets[0]!==previous.traineeId))throw new Error('Only incomplete/cancelled assignments can be reassigned to the same trainee');
- const now=new Date().toISOString();const assignments=targets.map(traineeId=>trainingSchemas.assignments.parse({schemaVersion:1,id:crypto.randomUUID(),unitId,instructorId:actor.userId,traineeId,scenarioId:scenario.id,scenarioSnapshot:scenario,policy:policyRecord?.policy??POLICY_BASIC_RECOGNITION,policyKey:policyRecord?.id??null,objectiveIds:input.objectiveIds,dueAt:input.dueAt,createdAt:now,status:'assigned',sessionId:null,attempt:(previous?.attempt??0)+1,supersedes:previous?.id??null,reviewNoteId:input.reviewNoteId??null}));
+ const now=new Date().toISOString();const assignments=targets.map(traineeId=>trainingSchemas.assignments.parse({schemaVersion:1,id:crypto.randomUUID(),unitId,instructorId:actor.userId,traineeId,scenarioId:scenario.id,scenarioSnapshot:scenario,policy:policyRecord?.policy??defaultPolicyFor(scenario),policyKey:policyRecord?.id??null,objectiveIds:input.objectiveIds,dueAt:input.dueAt,createdAt:now,status:'assigned',sessionId:null,attempt:(previous?.attempt??0)+1,supersedes:previous?.id??null,reviewNoteId:input.reviewNoteId??null}));
  await storage.saveTrainingRecords(assignments.map(value=>({kind:'assignments' as const,id:value.id,value})));return assignments;
  });}
 export async function startAssignment(storage:StorageAdapter,actor:LocalActor,assignmentId:string){return mutate(storage,async()=>{const assignment=(await records(storage,'assignments')).find(a=>a.id===assignmentId);if(!assignment)throw new Error('Assignment not found');await authorize(storage,actor,assignment.unitId,'ownTraining',assignment.traineeId);if(assignment.status!=='assigned')throw new Error('Assignment already started or closed');const started={...assignment,status:'started' as const,sessionId:`assigned-${crypto.randomUUID()}`};await writeRecord(storage,'assignments',started);return started;});}

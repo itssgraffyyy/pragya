@@ -1,3 +1,4 @@
+import type { GroupTraining } from './groups/models';
 /**
  * PRAGYA Module 1 — shared domain types.
  *
@@ -251,6 +252,7 @@ export interface CompletionCondition {
 }
 
 export interface ScenarioDefinition {
+  groupTraining?: GroupTraining;
   schemaVersion: number;
   id: string;
   title: string;
@@ -317,6 +319,9 @@ export const SIMULATION_TRANSITIONS: Record<SimulationState, SimulationState[]> 
 // ---------------------------------------------------------------------------
 
 export const SIMULATION_EVENT_TYPES = [
+  'groupStateChanged',
+  'groupObservationRecorded',
+  'groupReportSubmitted',
   'sessionStarted',
   'sessionPaused',
   'sessionResumed',

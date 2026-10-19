@@ -1,3 +1,4 @@
+import type { GroupReport } from '../core/groups/models';
 import { reconcileAssignment } from '../core/instructor/service';
 import type { ScoringPolicy } from '../core/scoring/policy';
 export interface AssignmentContext { assignmentId:string; unitId:string; policy:ScoringPolicy }
@@ -60,6 +61,8 @@ export interface SimulationStore {
   selectResponse: (contactId: string, r: string) => void;
   submitAssessment: (contactId: string) => void;
 
+  recordGroupObservation:(groupId:string,contactIds:string[])=>void;
+  submitGroupReport:(groupId:string,report:GroupReport,confidence:'low'|'medium'|'high')=>void;
   clearError: () => void;
 }
 
@@ -225,6 +228,11 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
     }
   },
 
+  recordGroupObservation:(groupId,contactIds)=>guard(set,get,e=>e.recordGroupObservation(groupId,contactIds)),
+  submitGroupReport:(groupId,report,confidence)=>{
+    guard(set,get,e=>e.submitGroupReport(groupId,report,confidence));
+    const {engine}=get();if(engine?.state==='completed'){syncFromEngine(set,engine);set({lastSummary:buildSessionSummary(engine),lastExport:captureSession(engine,set)});}
+  },
   clearError: () => set({ lastActionError: null }),
 }));
 
