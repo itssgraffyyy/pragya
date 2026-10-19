@@ -38,9 +38,9 @@ export function SettingsScreen() {
             className="mt-1 w-full bg-console-bg border border-console-border rounded px-2 py-1"
             data-testid="settings-graphics"
           >
-            <option value="low">Low (reduced particles, no shadows, 0.6x scale)</option>
-            <option value="medium">Medium (balanced)</option>
-            <option value="high">High (full effects)</option>
+            <option value="low">Low (reduced decoration, no shadows, 0.6× maximum pixel ratio)</option>
+            <option value="medium">Balanced (shadows, 1.25× maximum pixel ratio)</option>
+            <option value="high">High (fine terrain, 2048px shadows, 1.75× maximum pixel ratio)</option>
           </select>
         </label>
 

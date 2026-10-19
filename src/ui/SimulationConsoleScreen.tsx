@@ -155,7 +155,7 @@ export function SimulationConsoleScreen() {
           </div>
         )}
         {paused && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="absolute inset-0 pointer-events-none bg-black/30 flex items-center justify-center">
             <span className="text-xl font-semibold tracking-widest">PAUSED</span>
           </div>
         )}
